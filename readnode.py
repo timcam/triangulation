@@ -2,49 +2,39 @@ import sys, getopt, math, re, csv
 import numpy as np
 from array import array
 
-#################################
-###    QuadEdge Class         ###
-################################
+#set global variables
+quadID = 0
+edgeID = 0
+ 
+
+##############################
+###    QuadEdge Class      ###
+##############################
 class QuadEdge:
  def __init__(self):
-  self.rot = 0
+  # quadedge identification
+  global quadID
+  quadID += 1
+  self.id = quadID
+
+  #initialize list of edges
   self.e = [Edge(),Edge(),Edge(),Edge()]
-  self.curr = self.e[self.rot]
-  # self.next = self.e[self.rot].next
-  # self.org  = self.e[self.rot].org
 
- def dest(self):
-  return self.curr.dest
+  #Set the next pointers to infinity
+  self.e[0].next = self.e[0].id
+  self.e[1].next = self.e[3].id
+  self.e[2].next = self.e[2].id
+  self.e[3].next = self.e[1].id
 
- def org(self):
-  return self.curr.org
- 
- def next(self):
-  return self.curr.next
+  #set the rotations of each edge
+  self.e[0].rot = 0
+  self.e[1].rot = 1
+  self.e[2].rot = 2
+  self.e[3].rot = 3
 
- def Rot(self):
-  if (self.rot < 3):
-   self.rot += 1 
-  else:
-   self.rot = 0
-
- def invRot(self):
-  if (self.rot > 0): 
-   self.rot -= 1 
-  else:
-   self.rot = 3
-
- def Sym(self):
-  if (self.rot < 2):
-   self.rot += 2 
-  else:
-   self.rot -= 2
-
- def setOrg(self, vertex):
-  self.e[self.rot].org = vertex;
-
- def setDest(self, vertex):
-  self.e[self.rot].dest = vertex;
+  # set the quadedge ID in each of the edges
+  for i in xrange(3): 
+   self.e[i].qid = self.id
 
 
 ###############################
@@ -56,49 +46,34 @@ class Edge:
   self.next  = Edge
   self.org   = [None, None]
   self.dest  = [None, None]
-  self.rot   = 0
+  self.rot   = 0   # rotation in quadedge 
+  self.qid   = 0   # quadedge identification
+
+  # edge identification
+  global edgeID
+  edgeID += 1
+  self.id = edgeID    
+
 
 #########################
 ###    MakeEdge       ###
 #########################
 def makeEdge():
- a = QuadEdge()
+ q = QuadEdge()
 
- #Set the points to infinity
- a.e[0].next = a.e[0]
- a.e[1].next = a.e[3]
- a.e[2].next = a.e[2]
- a.e[3].next = a.e[1]
+ #return edge a as e[0], the canonical edge in q
+ a = q.e[0]
 
- a.e[0].rot = 0
- a.e[1].rot = 1
- a.e[2].rot = 2
- a.e[3].rot = 3
+ return (a,q)
 
- return a
-
-#####################
-###    Connect    ###
-#####################
-def Connect(a, b):
- e = makeEdge()
- e.setOrg(a.dest())
- e.setDest(b.org())
- # Splice(e, a.Lnext)
-
-
-##################
-### Run Tests  ###
-##################
-def runtests():
- b = makeEdge()
- return b
-
-
-
-
-
-
+# #####################
+# ###    Connect    ###
+# #####################
+# def Connect(a, b): 
+#  e = makeEdge()
+#  e.setOrg(a.dest())
+#  e.setDest(b.org())
+#  # Splice(e, a.Lnext)
 
 
 
@@ -158,9 +133,12 @@ def main(argv):
 
  parsefile(filename)
 
- runtests()
+ #Set the global values first
+
 
 
 
 if __name__ == "__main__":
   main(sys.argv[1:])
+
+
