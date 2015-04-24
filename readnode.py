@@ -47,9 +47,6 @@ class QuadEdge:
   self.e[self.rot].dest = vertex;
 
 
-
-
-
 ###############################
 ###    Edge Class        ###
 ################################
@@ -68,10 +65,10 @@ def makeEdge():
  a = QuadEdge()
 
  #Set the points to infinity
- a.e[0].next = a.e[3]
- a.e[1].next = a.e[2]
- a.e[2].next = a.e[1]
- a.e[3].next = a.e[0]
+ a.e[0].next = a.e[0]
+ a.e[1].next = a.e[3]
+ a.e[2].next = a.e[2]
+ a.e[3].next = a.e[1]
 
  a.e[0].rot = 0
  a.e[1].rot = 1
@@ -79,6 +76,16 @@ def makeEdge():
  a.e[3].rot = 3
 
  return a
+
+#####################
+###    Connect    ###
+#####################
+def Connect(a, b):
+ e = makeEdge()
+ e.setOrg(a.dest())
+ e.setDest(b.org())
+ # Splice(e, a.Lnext)
+
 
 ##################
 ### Run Tests  ###
