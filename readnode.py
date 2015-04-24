@@ -9,12 +9,45 @@ class QuadEdge:
  def __init__(self):
   self.rot = 0
   self.e = [Edge(),Edge(),Edge(),Edge()]
+  self.curr = self.e[self.rot]
+  # self.next = self.e[self.rot].next
+  # self.org  = self.e[self.rot].org
 
+ def dest(self):
+  return self.curr.dest
+
+ def org(self):
+  return self.curr.org
+ 
  def next(self):
-  return self.e[self.rot].next
+  return self.curr.next
 
- def current(self):
-  return self.e[self.rot]
+ def Rot(self):
+  if (self.rot < 3):
+   self.rot += 1 
+  else:
+   self.rot = 0
+
+ def invRot(self):
+  if (self.rot > 0): 
+   self.rot -= 1 
+  else:
+   self.rot = 3
+
+ def Sym(self):
+  if (self.rot < 2):
+   self.rot += 2 
+  else:
+   self.rot -= 2
+
+ def setOrg(self, vertex):
+  self.e[self.rot].org = vertex;
+
+ def setDest(self, vertex):
+  self.e[self.rot].dest = vertex;
+
+
+
 
 
 ###############################
@@ -23,9 +56,9 @@ class QuadEdge:
 class Edge:
  def __init__(self):
   #self.id   = reference
-  self.next  = [Edge]
+  self.next  = Edge
   self.org   = [None, None]
-  self.dest  = [0, 0]
+  self.dest  = [None, None]
   self.rot   = 0
 
 #########################
