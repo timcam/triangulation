@@ -5,6 +5,7 @@ from array import array
 #set global variables
 quadID = 0
 edgeID = 0
+quadlist = []
  
 
 ##############################
@@ -14,17 +15,20 @@ class QuadEdge:
  def __init__(self):
   # quadedge identification
   global quadID
-  quadID += 1
   self.id = quadID
+  quadID += 1
+
+  # add quadEdge to List for reference
+  quadlist.append(self)
 
   #initialize list of edges
   self.e = [Edge(),Edge(),Edge(),Edge()]
 
   #Set the next pointers to infinity
-  self.e[0].next = self.e[0].id
-  self.e[1].next = self.e[3].id
-  self.e[2].next = self.e[2].id
-  self.e[3].next = self.e[1].id
+  self.e[0].next = self.e[0]
+  self.e[1].next = self.e[3]
+  self.e[2].next = self.e[2]
+  self.e[3].next = self.e[1]
 
   #set the rotations of each edge
   self.e[0].rot = 0
@@ -37,9 +41,9 @@ class QuadEdge:
    self.e[i].qid = self.id
 
 
-###############################
+#############################
 ###    Edge Class        ###
-################################
+#############################
 class Edge:
  def __init__(self):
   #self.id   = reference
@@ -51,19 +55,51 @@ class Edge:
 
   # edge identification
   global edgeID
+  self.id = edgeID  
   edgeID += 1
-  self.id = edgeID    
+
+####### Rotate ########
+def Rot(a,q):
+ if (a.rot < 3):
+  return q.e[a.rot+1]
+ else:
+  return q.e[0]
+
+#### Inv Rotate ######
+def invRot(a,q):
+ if (a.rot > 0):
+  return q.e[a.rot-1]
+ else:
+  return q.e[3]
+
+###### sym #########
+def Sym(a,q):
+ if (a.rot > 1):
+  return q.e[a.rot-2]
+ else:
+  return q.e[a.rot+2]
+
+###### next ########
+def Onext(a):
+ return a.next
+
+###### previous ########
+def Oprev(a,q):
+ #take the rotation and next edge
+ tmp = Rot(a,q) 
+ tmp = tmp.next
+
+ #that edge may not belong to q, do lookup
+ qtmp = quadlist[tmp.qid]
+ return Rot(tmp,qtmp)
 
 
-#########################
-###    MakeEdge       ###
-#########################
+#########  MakeEdge ##########
 def makeEdge():
  q = QuadEdge()
 
- #return edge a as e[0], the canonical edge in q
+ #return edge a as e[0], canonical edge in q
  a = q.e[0]
-
  return (a,q)
 
 # #####################
