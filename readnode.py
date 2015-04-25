@@ -67,7 +67,6 @@ class Edge:
 #####################################################
 
 ####### Rotate ########
-# returns eRot, q is unchanged
 def Rot(t):
  a = t[0]; q = t[1]
  if (a.rot < 3):
@@ -76,7 +75,6 @@ def Rot(t):
   return (q.e[0], q)
 
 #### Inv Rotate ######
-#returns eRot-1, q is unchanged
 def invRot(t):
  a = t[0]; q = t[1]
  if (a.rot > 0):
@@ -85,7 +83,6 @@ def invRot(t):
   return (q.e[3], q)
 
 ###### sym #########
-#returns eSym, q is unchanged
 def Sym(t):
  a = t[0]; q = t[1]
  if (a.rot > 1):
@@ -147,13 +144,31 @@ def MakeEdge():
 #####################
 def Connect(p, q): 
  e = makeEdge()
+ 
 
 
 #####################
 ###    Splice     ###
 #####################
-def splice(p, q):
- alpha = Rot( Onext(p))
+def splice(a, b):
+ alpha = Rot( Onext(a))
+ beta  = Rot( Onext(b))
+
+ # assign temp edge variables
+ # the [0] is the edge element
+  p = b[0].next
+  q = a[0].next
+  r = beta[0].next
+  s = alpha[0].next
+ 
+ # reassign the next values
+ a[0].next = p
+ b[0].next = q
+ alpha[0].next = r
+ beta[0].next = s
+
+
+
 
 
 
