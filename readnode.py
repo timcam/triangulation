@@ -1,6 +1,7 @@
 import sys, getopt, math, re, csv
 import numpy as np
 from array import array
+from predicates import orient2d, incircle
 
 #set global variables
 quadID = 0
@@ -51,8 +52,8 @@ class Edge:
  def __init__(self):
   #self.id   = reference
   self.next  = Edge
-  self.org   = [None, None]
-  self.dest  = [None, None]
+  self.org   = (None, None)
+  self.dest  = (None, None)
   self.rot   = 0   # rotation in quadedge 
   self.qid   = 0   # quadedge identification
 
@@ -142,40 +143,76 @@ def MakeEdge():
 #####################
 ###    Connect    ###
 #####################
-def Connect(p, q): 
+def Connect(a, b): 
  e = makeEdge()
- 
+
+ e[0].org  = a[0].dest
+ e[0].dest = b[0].org
+
+ Splice(e, Lnext(a))
+ Splice(Sym(e), b)
+
+ return e
 
 
 #####################
 ###    Splice     ###
 #####################
-def splice(a, b):
+def Splice(a, b):
  alpha = Rot( Onext(a))
  beta  = Rot( Onext(b))
 
  # assign temp edge variables
  # the [0] is the edge element
-  p = b[0].next
-  q = a[0].next
-  r = beta[0].next
-  s = alpha[0].next
- 
+ p = b[0].next
+ q = a[0].next
+ r = beta[0].next
+ s = alpha[0].next
+
  # reassign the next values
  a[0].next = p
  b[0].next = q
  alpha[0].next = r
  beta[0].next = s
 
+#####################
+###    Delete     ###
+#####################
+def DeleteEdge(e):
+ Splice(e, Oprev(e))
+ Splice(Sym(e), Oprev(Sym(e)))
+
+##################################################
+###########  Orientation Tests    ################
+##################################################
+
+###### Right Of ########
+def RightOf(x, e):
+ return CCW(x, e[0].dest, e[0].org)
+
+###### Left OF ########
+def LeftOf(x, e):
+ return CCW(x, e[0].org, e[0].dest) 
+
+###### Counter Clockwise ########
+# takes three points as tuples
+def CCW(a, b, c):
+ return True if (orient2d(a,b,c) > 0) return False
+
+###### In Circle ########
+# takes four points as tuples
+def InCircle(a, b, c, d):
+ return True if (incircle(a, b, c, d) > 0) return False
+
+###### In Circle ########
+def Valid(e, base):
+ return CCW(e[0].dest, base[0].dest, base[0].org)
 
 
+###############################################
+###########  File Handling     ################
+###############################################
 
-
-
-
-###################
-### Parse File ###
-###################
 def parsefile(filename):
  # Read the file and header
  f = open(filename, "r")
@@ -195,6 +232,8 @@ def parsefile(filename):
   vertices[l,:] = map(float,line)
 
  f.close()
+
+ return vertices
 
 
 ################################
@@ -227,10 +266,8 @@ def main(argv):
    print 'File not valid'
    sys.exit()
 
- parsefile(filename)
-
- #Set the global values first
-
+ vertices = parsefile(filename)
+ print filename
 
 
 
