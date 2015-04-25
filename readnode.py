@@ -6,8 +6,11 @@ from array import array
 quadID = 0
 edgeID = 0
 quadlist = []
- 
 
+#####################################################
+#############    Classes             ################
+#####################################################
+ 
 ##############################
 ###    QuadEdge Class      ###
 ##############################
@@ -58,7 +61,13 @@ class Edge:
   self.id = edgeID  
   edgeID += 1
 
+
+#####################################################
+#############    Edge Algebra        ################
+#####################################################
+
 ####### Rotate ########
+# returns eRot, q is unchanged
 def Rot(a,q):
  if (a.rot < 3):
   return q.e[a.rot+1]
@@ -66,6 +75,7 @@ def Rot(a,q):
   return q.e[0]
 
 #### Inv Rotate ######
+#returns eRot-1, q is unchanged
 def invRot(a,q):
  if (a.rot > 0):
   return q.e[a.rot-1]
@@ -73,43 +83,95 @@ def invRot(a,q):
   return q.e[3]
 
 ###### sym #########
+#returns eSym, q is unchanged
 def Sym(a,q):
  if (a.rot > 1):
   return q.e[a.rot-2]
  else:
   return q.e[a.rot+2]
 
-###### next ########
+###### Onext ########
+#returns eOnext and qOnext
 def Onext(a):
- return a.next
+ return (a.next, quadlist[a.next.qid])
 
-###### previous ########
+###### Lnext ########
+#returns eLnext and qLnext
+def Lnext(a,q):
+ tmp = invRot(a,q)
+ tmp, qtmp = Onext(tmp)
+ return (Rot(tmp,qtmp), qtmp)
+
+###### Rnext ########
+#returns eRnext and qRnext
+def Lnext(a,q):
+ tmp = Rot(a,q)
+ tmp, qtmp = Onext(tmp)
+ return (Rot(tmp,qtmp), qtmp)
+
+###### Dnext ########
+#returns eRnext and qRnext
+def Lnext(a,q):
+ tmp = Sym(a,q)
+ tmp, qtmp = Onext(tmp)
+ return (Sym(tmp,qtmp), qtmp)
+
+
+###### Oprev ########
+#returns eOprev and qOprev
 def Oprev(a,q):
- #take the rotation and next edge
  tmp = Rot(a,q) 
- tmp = tmp.next
+ tmp, qtmp = Onext(tmp)
+ return (Rot(tmp,qtmp), qtmp)
 
- #that edge may not belong to q, do lookup
- qtmp = quadlist[tmp.qid]
- return Rot(tmp,qtmp)
+###### Lprev ########
+#returns eLprev and qLprev
+def Lprev(a,q):
+ tmp, qtmp = Onext(a)
+ return (Sym(tmp,qtmp), qtmp)
+
+###### Rprev ########
+#returns eRprev and qRprev
+def Rprev(a,q):
+ tmp, qtmp = Sym(a,q)
+ return (Onext(tmp), qtmp)
+
+###### Dprev ########
+#returns eDprev and qDprev
+def Dprev(a,q):
+ tmp = invRot(a,q)
+ tmp, qtmp = Onext(tmp)
+ return (invRot(tmp), qtmp)
 
 
-#########  MakeEdge ##########
-def makeEdge():
+#####################################################
+###########  Topological Operators   ################
+#####################################################
+
+
+#####################
+###    MakeEdge   ###
+#####################
+def MakeEdge():
  q = QuadEdge()
 
  #return edge a as e[0], canonical edge in q
  a = q.e[0]
  return (a,q)
 
-# #####################
-# ###    Connect    ###
-# #####################
-# def Connect(a, b): 
-#  e = makeEdge()
-#  e.setOrg(a.dest())
-#  e.setDest(b.org())
-#  # Splice(e, a.Lnext)
+#####################
+###    Connect    ###
+#####################
+def Connect(a, b): 
+ e = makeEdge()
+ e.setOrg(a.dest())
+ e.setDest(b.org())
+ # Splice(e, a.Lnext)
+
+#####################
+###    Splice     ###
+#####################
+
 
 
 
