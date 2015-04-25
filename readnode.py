@@ -68,80 +68,63 @@ class Edge:
 
 ####### Rotate ########
 # returns eRot, q is unchanged
-def Rot(a,q):
+def Rot(t):
+ a = t[0]; q = t[1]
  if (a.rot < 3):
-  return q.e[a.rot+1]
+  return (q.e[a.rot+1], q)
  else:
-  return q.e[0]
+  return (q.e[0], q)
 
 #### Inv Rotate ######
 #returns eRot-1, q is unchanged
-def invRot(a,q):
+def invRot(t):
+ a = t[0]; q = t[1]
  if (a.rot > 0):
-  return q.e[a.rot-1]
+  return (q.e[a.rot-1], q)
  else:
-  return q.e[3]
+  return (q.e[3], q)
 
 ###### sym #########
 #returns eSym, q is unchanged
-def Sym(a,q):
+def Sym(t):
+ a = t[0]; q = t[1]
  if (a.rot > 1):
-  return q.e[a.rot-2]
+  return (q.e[a.rot-2], q)
  else:
-  return q.e[a.rot+2]
+  return (q.e[a.rot+2], q)
 
 ###### Onext ########
-#returns eOnext and qOnext
-def Onext(a):
+def Onext(t):
+ a = t[0]; 
  return (a.next, quadlist[a.next.qid])
 
 ###### Lnext ########
-#returns eLnext and qLnext
-def Lnext(a,q):
- tmp = invRot(a,q)
- tmp, qtmp = Onext(tmp)
- return (Rot(tmp,qtmp), qtmp)
+def Lnext(t):
+ return Rot( Onext( invRot(t)))
 
 ###### Rnext ########
-#returns eRnext and qRnext
-def Lnext(a,q):
- tmp = Rot(a,q)
- tmp, qtmp = Onext(tmp)
- return (Rot(tmp,qtmp), qtmp)
+def Rnext(t):
+ return invRot( Onext( Rot(t)))
 
 ###### Dnext ########
-#returns eRnext and qRnext
-def Lnext(a,q):
- tmp = Sym(a,q)
- tmp, qtmp = Onext(tmp)
- return (Sym(tmp,qtmp), qtmp)
-
+def Dnext(t):
+ return Sym( Onext( Sym(t)))
 
 ###### Oprev ########
-#returns eOprev and qOprev
-def Oprev(a,q):
- tmp = Rot(a,q) 
- tmp, qtmp = Onext(tmp)
- return (Rot(tmp,qtmp), qtmp)
+def Oprev(t):
+ return Rot( Onext( Rot(t)))
 
 ###### Lprev ########
-#returns eLprev and qLprev
-def Lprev(a,q):
- tmp, qtmp = Onext(a)
- return (Sym(tmp,qtmp), qtmp)
+def Lprev(t):
+ return Sym( Onext(t))
 
 ###### Rprev ########
-#returns eRprev and qRprev
-def Rprev(a,q):
- tmp, qtmp = Sym(a,q)
- return (Onext(tmp), qtmp)
+def Rprev(t):
+ return Onext( Sym(t))
 
 ###### Dprev ########
-#returns eDprev and qDprev
-def Dprev(a,q):
- tmp = invRot(a,q)
- tmp, qtmp = Onext(tmp)
- return (invRot(tmp), qtmp)
+def Dprev(t):
+ return invRot( Onext( invRot(t)))
 
 
 #####################################################
@@ -162,15 +145,15 @@ def MakeEdge():
 #####################
 ###    Connect    ###
 #####################
-def Connect(a, b): 
+def Connect(p, q): 
  e = makeEdge()
- e.setOrg(a.dest())
- e.setDest(b.org())
- # Splice(e, a.Lnext)
+
 
 #####################
 ###    Splice     ###
 #####################
+def splice(p, q):
+ alpha = Rot( Onext(p))
 
 
 
