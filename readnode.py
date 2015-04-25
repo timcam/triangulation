@@ -197,12 +197,12 @@ def LeftOf(x, e):
 ###### Counter Clockwise ########
 # takes three points as tuples
 def CCW(a, b, c):
- return True if (orient2d(a,b,c) > 0) return False
+ return True if (orient2d(a,b,c) > 0) else False
 
 ###### In Circle ########
 # takes four points as tuples
 def InCircle(a, b, c, d):
- return True if (incircle(a, b, c, d) > 0) return False
+ return True if (incircle(a, b, c, d) > 0) else False
 
 ###### In Circle ########
 def Valid(e, base):
@@ -221,19 +221,47 @@ def parsefile(filename):
 
  # Parse the header
  head = re.split('  ', header)
- rotVert = int(head[0])
+ numVert = int(head[0])
 
  # Make an array that is (rotber of Vertices x 3)
- vertices = np.empty([rotVert, 3], dtype = float)
+ #vertices = np.zeros([numVert,2], dtype = np.dtype([('x', float), ('y', float)]))
+ v = np.zeros([numVert,2], dtype = float)
+ #x = np.zeros([numVert,1], dtype = float)
+ #y = np.zeros([numVert,1], dtype = float)
+
 
  # fill the array
- for l in range(0,rotVert): 
-  line = re.split('  ', f.readline().strip('\n'))
-  vertices[l,:] = map(float,line)
+ for l in range(0,numVert): 
+  #splits by the spaces and converts to floats 
+  line = map(float, re.split('  ', f.readline().strip('\n')))
+  #drops the vertex number
+  #x[l] = line[1]
+  v[l] = line[-2:]
+
+ # sort the list
+ q = v.tolist()
+ q.sort()
+ v = np.array(q)
+
+
+ #q = np.argsort(v[:,0])
+ #ind = np.lexsort((x,y))
+ #v = v[q[:,0]]
+ print v
+ print v[:,0]
+
+ #v = [(x[i],y[i]) for i in ind]
+ #print v
+
+
 
  f.close()
 
- return vertices
+
+ return v
+
+ #when I need a tuple of the vertex
+ #tuple(vertices[1,:].tolist())
 
 
 ################################
