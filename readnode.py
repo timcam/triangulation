@@ -210,6 +210,55 @@ def Valid(e, base):
 
 
 ###############################################
+###########  Splitting Sets     ################
+###############################################
+
+#######################
+###    quickselect  ###
+#######################
+#http://stackoverflow.com/questions/19258457/python-quickselect-function-finding-the-median
+def quickSelect(seq,k):
+ k = len(seq) // 2
+ # this part is the same as quick sort
+ len_seq = len(seq)
+ if len_seq < 2: return seq
+
+ ipivot = len_seq // 2
+ pivot = seq[ipivot]
+
+ smallerList = [x for i,x in enumerate(seq) if x <= pivot and  i != ipivot]
+ largerList = [x for i,x in enumerate(seq) if x > pivot and  i != ipivot]
+
+ # here starts the different part
+ m = len(smallerList)
+ if k == m:
+  return pivot
+ elif k < m:
+  return quickSelect(smallerList, k)
+ else:
+  return quickSelect(largerList, k-m-1)
+
+#######################
+###    halfSet  ###
+#######################
+def halfSet(s):
+
+ # for odd number of points split an even set and add right side
+ if ((len(s) % 2) > 0):
+  left, right = np.vsplit(s[0:-1],2)
+  #add the extra to right side
+  right = np.vstack([right,x[-1,:]])
+
+  return left, right 
+
+ else:
+  left, right = np.vsplit(s,2)
+  return left, right
+
+ #median = quickSelect(s,(len(s) // 2))
+
+
+###############################################
 ###########  File Handling     ################
 ###############################################
 
@@ -224,18 +273,13 @@ def parsefile(filename):
  numVert = int(head[0])
 
  # Make an array that is (rotber of Vertices x 3)
- #vertices = np.zeros([numVert,2], dtype = np.dtype([('x', float), ('y', float)]))
  v = np.zeros([numVert,2], dtype = float)
- #x = np.zeros([numVert,1], dtype = float)
- #y = np.zeros([numVert,1], dtype = float)
-
 
  # fill the array
  for l in range(0,numVert): 
   #splits by the spaces and converts to floats 
   line = map(float, re.split('  ', f.readline().strip('\n')))
   #drops the vertex number
-  #x[l] = line[1]
   v[l] = line[-2:]
 
  # sort the list
@@ -243,25 +287,14 @@ def parsefile(filename):
  q.sort()
  v = np.array(q)
 
-
- #q = np.argsort(v[:,0])
- #ind = np.lexsort((x,y))
- #v = v[q[:,0]]
- print v
- print v[:,0]
-
- #v = [(x[i],y[i]) for i in ind]
- #print v
-
-
-
  f.close()
-
 
  return v
 
  #when I need a tuple of the vertex
  #tuple(vertices[1,:].tolist())
+
+
 
 
 ################################
