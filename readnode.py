@@ -21,9 +21,10 @@ def Delaunay(s):
   a[0].org  = s[0]
   a[0].dest = s[1]
 
+  print 'returning from 2'
   return (a, Sym(a))
  
- #base case with three points
+ #base case with three (3) points
  elif (len(s) == 3):
   a = MakeEdge(); b = MakeEdge()
   Splice(Sym(a),b)
@@ -32,16 +33,20 @@ def Delaunay(s):
   b[0].org = s[1]; b[0].dest = s[2]
 
   if CCW(s[0],s[1],s[2]):
-   c = Connect(a,b)
+   c = Connect(b,a)
+   print 'returning from 2 case 1'
    return (a, Sym(b))
 
   elif (s[0],s[2],s[1]):
    c = Connect(b,a)
+   print 'returning from 2 case 2'
    return (Sym(c), c)
 
   else:
+   print 'returning from 2 case 3'
    return (a, Sym(b))
 
+  #case with 4 or more points
   #split the set again and then zip together
  else:
   left, right = HalfSet(s)
@@ -49,39 +54,46 @@ def Delaunay(s):
   ldo, ldi = Delaunay(left);
   rdi, rdo = Delaunay(right);
 
+  print 'ldo.org: ' + str(ldo[0].org)+ str(ldo[0].dest)
+  print 'ldi.org: ' + str(ldi[0].org)+ str(ldi[0].dest)
+  print 'rdi.org: ' + str(rdi[0].org)+ str(rdi[0].dest)
+  print 'rdo.org: ' + str(rdo[0].org)+ str(rdo[0].dest)
+
   while True:
-  if LeftOf(rdi[0].org, ldi):
-   ldi = Lnext(ldi)
-  elif RightOf(ldi[0].org, rdi):
-   rdi = Rprev(rdi)
-  else:
-    break
+   if LeftOf(rdi[0].org, ldi):
+    ldi = Lnext(ldi)
+   elif RightOf(ldi[0].org, rdi):
+    rdi = Rprev(rdi)
+   else:
+     break
 
   #create the base edge  
   basel = Connect(Sym(rdi), ldi)
-
-  ldo = Sym(basel) if (ldi[0].org == ldo[0].org)
-  rdo = basel if (rdi[0] == rdo[0].org)
+  print str(ldi[0].org) + str(ldo[0].org)
+  if cmp(ldi[0].org,ldo[0].org):
+   ldo = Sym(basel) 
+  if cmp(rdi[0].org,rdo[0].org):
+   rdo = basel
 
   #this is the merge loop
   while True:
    lcand = Onext(Sym(basel))
-   if Valid(lcand):
+   if Valid(lcand, basel):
     while InCircle(basel[0].dest, basel[0].org, lcand[0].dest, Onext(lcand)[0].dest):
      t = Onext(lcand); DeleteEdge(lcand); lcand = t
 
    # symmetrically locate first R point to hit and delete R edges
    rcand = Oprev(basel)
-   if Valid(rcand):
+   if Valid(rcand, basel):
     while InCircle(basel[0].dest, basel[0].org, lcand[0].dest, Oprev(lcand)[0].dest):
      t = Oprev(rcand); DeleteEdge(rcand); rcand = t
 
    # if both lcand and rcand are invalid then basel L is tanget
-   if not Valid(lcand) and not Valid(rcand):
+   if not Valid(lcand, basel) and not Valid(rcand, basel):
     break
 
    # if both are valid then choose the right edge with incircle
-   if not Valid(lcand) or (Valid(rcad) and InCircle(lcand[0].dest, lcand[0].org, rcand[0].org, rcand[0].dest)):
+   if not Valid(lcand, basel) or (Valid(rcand, basel) and InCircle(lcand[0].dest, lcand[0].org, rcand[0].org, rcand[0].dest)):
     # add cross edge basel from rcand to basel.dest
     basel = Connect(rcand, Sym(basel))
    else:
@@ -171,10 +183,14 @@ def invRot(t):
 
 ###### sym #########
 def Sym(t):
- a = t[0]; q = t[1]
+ a = t[0]; q = t[1] 
  if (a.rot > 1):
+  q.e[a.rot-2].org  = a.dest
+  q.e[a.rot-2].dest = a.org
   return (q.e[a.rot-2], q)
  else:
+  q.e[a.rot+2].org  = a.dest
+  q.e[a.rot+2].dest = a.org
   return (q.e[a.rot+2], q)
 
 ###### Onext ########
@@ -230,7 +246,7 @@ def MakeEdge():
 ###    Connect    ###
 #####################
 def Connect(a, b): 
- e = makeEdge()
+ e = MakeEdge()
 
  e[0].org  = a[0].dest
  e[0].dest = b[0].org
@@ -285,11 +301,13 @@ def LeftOf(x, e):
 ###### Counter Clockwise ########
 # takes three points as tuples
 def CCW(a, b, c):
+ a = tuple(a); b = tuple(b); c = tuple(c);
  return True if (orient2d(a,b,c) > 0) else False
 
 ###### In Circle ########
 # takes four points as tuples
 def InCircle(a, b, c, d):
+ a = tuple(a); b = tuple(b); c = tuple(c); d = tuple(d)
  return True if (incircle(a, b, c, d) > 0) else False
 
 ###### In Circle ########
@@ -369,20 +387,29 @@ def ParseFile(filename):
  v = np.zeros([numVert,2], dtype = float)
 
  # fill the array
- for l in range(0,numVert): 
+ for i in xrange(numVert): 
+
+  l = f.readline().strip('\n')
+  l = re.split(' ',l)
+  l = filter(lambda a: a != '', l)
+  line  = map(float, l)
   #splits by the spaces and converts to floats 
-  line = map(float, re.split('  ', f.readline().strip('\n')))
-  #drops the vertex number
-  v[l] = line[-2:]
+  # line = map(float, re.split('  ', f.readline().strip('\n')))
+  #drops the vertex numbe
+  v[i] = line[-2:]
 
  # sort the list
  q = v.tolist()
  q.sort()
  v = np.array(q)
 
+ print v
+
  f.close()
 
  return v
+
+
 
  #when I need a tuple of the vertex
  #tuple(vertices[1,:].tolist())
