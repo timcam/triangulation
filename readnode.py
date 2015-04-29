@@ -21,7 +21,7 @@ def Delaunay(s):
   a[0].org  = s[0]
   a[0].dest = s[1]
 
-  print 'returning from 2'
+  print 'returning from base 2'
   return (a, Sym(a))
  
  #base case with three (3) points
@@ -34,16 +34,16 @@ def Delaunay(s):
 
   if CCW(s[0],s[1],s[2]):
    c = Connect(b,a)
-   print 'returning from 2 case 1'
+   print 'returning from base 3 case 1'
    return (a, Sym(b))
 
-  elif (s[0],s[2],s[1]):
+  elif CCW(s[0],s[2],s[1]):
    c = Connect(b,a)
-   print 'returning from 2 case 2'
+   print 'returning from base 3 case 2'
    return (Sym(c), c)
 
   else:
-   print 'returning from 2 case 3'
+   print 'returning from base 3 case 3'
    return (a, Sym(b))
 
   #case with 4 or more points
@@ -54,10 +54,10 @@ def Delaunay(s):
   ldo, ldi = Delaunay(left);
   rdi, rdo = Delaunay(right);
 
-  print 'ldo.org: ' + str(ldo[0].org)+ str(ldo[0].dest)
-  print 'ldi.org: ' + str(ldi[0].org)+ str(ldi[0].dest)
-  print 'rdi.org: ' + str(rdi[0].org)+ str(rdi[0].dest)
-  print 'rdo.org: ' + str(rdo[0].org)+ str(rdo[0].dest)
+  # print 'ldo.org: ' + str(ldo[0].org)+ str(ldo[0].dest)
+  # print 'ldi.org: ' + str(ldi[0].org)+ str(ldi[0].dest)
+  # print 'rdi.org: ' + str(rdi[0].org)+ str(rdi[0].dest)
+  # print 'rdo.org: ' + str(rdo[0].org)+ str(rdo[0].dest)
 
   while True:
    if LeftOf(rdi[0].org, ldi):
@@ -69,7 +69,8 @@ def Delaunay(s):
 
   #create the base edge  
   basel = Connect(Sym(rdi), ldi)
-  print str(ldi[0].org) + str(ldo[0].org)
+  ldi[0].org
+  print 'ldi.org and ldo.org: ' + str(ldi[0].org) + str(ldo[0].org)
   if cmp(ldi[0].org,ldo[0].org):
    ldo = Sym(basel) 
   if cmp(rdi[0].org,rdo[0].org):
@@ -78,6 +79,8 @@ def Delaunay(s):
   #this is the merge loop
   while True:
    lcand = Onext(Sym(basel))
+   print 'lcand.org: ' + str(lcand[0].org)
+   print 'lcand.dest: '+ str(lcand[0].dest)
    if Valid(lcand, basel):
     while InCircle(basel[0].dest, basel[0].org, lcand[0].dest, Onext(lcand)[0].dest):
      t = Onext(lcand); DeleteEdge(lcand); lcand = t
@@ -302,6 +305,8 @@ def LeftOf(x, e):
 # takes three points as tuples
 def CCW(a, b, c):
  a = tuple(a); b = tuple(b); c = tuple(c);
+
+ print 'CCW: a: ' + str(a) + ', b: ' + str(b) + ', c: ' + str(c)
  return True if (orient2d(a,b,c) > 0) else False
 
 ###### In Circle ########
@@ -384,7 +389,8 @@ def ParseFile(filename):
  numVert = int(head[0])
 
  # Make an array that is (rotber of Vertices x 3)
- v = np.zeros([numVert,2], dtype = float)
+ #v = np.zeros([numVert,2], dtype = float)
+ v = []
 
  # fill the array
  for i in xrange(numVert): 
@@ -396,12 +402,14 @@ def ParseFile(filename):
   #splits by the spaces and converts to floats 
   # line = map(float, re.split('  ', f.readline().strip('\n')))
   #drops the vertex numbe
-  v[i] = line[-2:]
+  #v[i] = line[-2:]
+  v.append(tuple(line[-2:]))
 
  # sort the list
- q = v.tolist()
- q.sort()
- v = np.array(q)
+ #q = v.tolist()
+ #q.sort()
+ v.sort()
+ #v = np.array(q)
 
  print v
 
