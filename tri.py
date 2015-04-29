@@ -18,33 +18,33 @@ def Delaunay(s):
  if len(s) == 2:
   a = MakeEdge()
   #select edge object
-  a[0].org  = s[0]
-  a[0].dest = s[1]
+  a.setOrg(s[0])
+  a.setDest(s[1])
 
   print 'returning from base 2'
-  return (a, Sym(a))
+  return (a, a.Sym)
  
  #base case with three (3) points
  elif (len(s) == 3):
   a = MakeEdge(); b = MakeEdge()
-  Splice(Sym(a),b)
+  Splice(a.Sym, b)
 
-  a[0].org = s[0]; a[0].dest = s[1]
-  b[0].org = s[1]; b[0].dest = s[2]
+  a.setOrg(s[0]); a.setDest(s[1])
+  b.setOrg(s[1]); b.setDest(s[2])
 
   if CCW(s[0],s[1],s[2]):
    c = Connect(b,a)
    print 'returning from base 3 case 1'
-   return (a, Sym(b))
+   return (a, b.Sym)
 
   elif CCW(s[0],s[2],s[1]):
    c = Connect(b,a)
    print 'returning from base 3 case 2'
-   return (Sym(c), c)
+   return (c.Sym, c)
 
   else:
    print 'returning from base 3 case 3'
-   return (a, Sym(b))
+   return (a, b.Sym)
 
   #case with 4 or more points
   #split the set again and then zip together
@@ -54,54 +54,57 @@ def Delaunay(s):
   ldo, ldi = Delaunay(left);
   rdi, rdo = Delaunay(right);
 
-  print 'ldo.org:', ldo[0].org, 'ldo.dest:', ldo[0].dest
-  print 'ldi.org:', ldi[0].org, 'ldi.dest:', ldi[0].dest
-  print 'rdi.org:', rdi[0].org, 'rdi.dest:', rdi[0].dest
-  print 'rdo.org:', rdo[0].org, 'rdo.dest:', rdo[0].dest
+  print 'ldo.org:', ldo.Org, 'ldo.dest:', ldo.Dest
+  print 'ldi.org:', ldi.Org, 'ldi.dest:', ldi.Dest
+  print 'rdi.org:', rdi.Org, 'rdi.dest:', rdi.Dest
+  print 'rdo.org:', rdo.Org, 'rdo.dest:', rdo.Dest
 
   while True:
-   if LeftOf(rdi[0].org, ldi):
-    ldi = Lnext(ldi)
-   elif RightOf(ldi[0].org, rdi):
-    rdi = Rprev(rdi)
+   if LeftOf(rdi.Org, ldi):
+    ldi = ldi.Lnext
+   elif RightOf(ldi.Org, rdi):
+    rdi = rdi.Rprev
    else:
      print 'break'
      break
 
   #create the base edge  
-  basel = Connect(Sym(rdi), ldi)
-  ldi[0].org
-  print 'Connect ldi.org and ldo.org:', ldi[0].org, ldo[0].org
-  if ldi[0].org == ldo[0].org:
-   ldo = Sym(basel) 
-  if rdi[0].org == rdo[0].org:
+  basel = Connect(rdi.Sym, ldi)
+
+  print 'Connect ldi.org and ldo.org:', ldi.Org, ldo.Org
+
+  if ldi.Org == ldo.Org:
+   ldo = basel.Sym
+  if rdi.Org == rdo.Org:
    rdo = basel
 
   #this is the merge loop
   while True:
-   lcand = Onext(Sym(basel))
-   print 'lcand.org: ' + str(lcand[0].org)
-   print 'lcand.dest: '+ str(lcand[0].dest)
+   lcand = basel.Sym.Onext
+
+   print 'lcand.org:',  lcand.Org
+   print 'lcand.dest:', lcand.Dest
+
    if Valid(lcand, basel):
-    while InCircle(basel[0].dest, basel[0].org, lcand[0].dest, Onext(lcand)[0].dest):
-     t = Onext(lcand); DeleteEdge(lcand); lcand = t
+    while InCircle(basel.Dest, basel.Org, lcand.Dest, lcand.Onext.Dest):
+     t = lcand.Onext; DeleteEdge(lcand); lcand = t
 
    # symmetrically locate first R point to hit and delete R edges
-   rcand = Oprev(basel)
+   rcand = basel.Oprev
    if Valid(rcand, basel):
-    while InCircle(basel[0].dest, basel[0].org, lcand[0].dest, Oprev(lcand)[0].dest):
-     t = Oprev(rcand); DeleteEdge(rcand); rcand = t
+    while InCircle(basel.Dest, basel.Org, rcand.Dest, rcand.Oprev.Dest):
+     t = rcand.Oprev; DeleteEdge(rcand); rcand = t
 
    # if both lcand and rcand are invalid then basel L is tanget
    if not Valid(lcand, basel) and not Valid(rcand, basel):
     break
 
    # if both are valid then choose the right edge with incircle
-   if not Valid(lcand, basel) or (Valid(rcand, basel) and InCircle(lcand[0].dest, lcand[0].org, rcand[0].org, rcand[0].dest)):
+   if not Valid(lcand, basel) or (Valid(rcand, basel) and InCircle(lcand.Dest, lcand.Org, rcand.Org, rcand.Dest)):
     # add cross edge basel from rcand to basel.dest
-    basel = Connect(rcand, Sym(basel))
+    basel = Connect(rcand, basel.Sym)
    else:
-    basel = Connect(Sym(basel), Sym(lcand))
+    basel = Connect(basel.Sym, lcand.Sym)
 
   return (ldo, rdo)
 
@@ -155,7 +158,6 @@ class Edge:
   #self.id   = reference
   self.next  = Edge
   self.org   = (None, None)
-  self.dest  = (None, None)
   self.rot   = 0   # rotation in quadedge 
   self.qid   = 0   # quadedge identification
 
@@ -164,76 +166,96 @@ class Edge:
   self.id = edgeID  
   edgeID += 1
 
+ #############################################
+ #########  Edge Algebra Methods  ############
+ #############################################
+ @property
+ def Org(self):
+  return self.org
 
-#####################################################
-#############    Edge Algebra        ################
-#####################################################
+ @property
+ def Dest(self):
+  return self.Sym.org
 
-####### Rotate ########
-def Rot(t):
- a = t[0]; q = t[1]
- if (a.rot < 3):
-  return (q.e[a.rot+1], q)
- else:
-  return (q.e[0], q)
+ def setOrg(self, vertex):
+  self.org = vertex
 
-#### Inv Rotate ######
-def invRot(t):
- a = t[0]; q = t[1]
- if (a.rot > 0):
-  return (q.e[a.rot-1], q)
- else:
-  return (q.e[3], q)
+ def setDest(self, vertex):
+  self.Sym.setOrg(vertex)
 
-###### sym #########
-def Sym(t):
- a = t[0]; q = t[1] 
- if (a.rot > 1):
-  q.e[a.rot-2].org  = a.dest
-  q.e[a.rot-2].dest = a.org
-  return (q.e[a.rot-2], q)
- else:
-  q.e[a.rot+2].org  = a.dest
-  q.e[a.rot+2].dest = a.org
-  return (q.e[a.rot+2], q)
+ ####### Rotate ########
+ @property
+ def Rot(self):
+  #look up the parent quadedge and return the CCW edge
+  if (self.rot < 3):
+   return quadlist[self.qid].e[self.rot+1]
+  else:
+   return quadlist[self.qid].e[0]
 
-###### Onext ########
-def Onext(t):
- a = t[0]
- return (a.next, quadlist[a.next.qid])
+ #### Inv Rotate ######
+ @property
+ def invRot(self):
+  if (self.rot > 0):
+   return quadlist[self.qid].e[self.rot-1]
+  else:
+   return quadlist[self.qid].e[3]
 
-###### Lnext ########
-def Lnext(t):
- a = Rot( Onext( invRot(t)))
- a[0].org = t[0].dest
- return a
+ ###### sym #########
+ @property
+ def Sym(self):
+  q = quadlist[self.qid]
+  if self.rot > 1 :
+   return q.e[self.rot -2]
+  else:
+   return q.e[self.rot +2]
 
-###### Rnext ########
-def Rnext(t):
- return invRot( Onext( Rot(t)))
+ ###### Onext ########
+ @property
+ def Onext(self):
+  return self.next
 
-###### Dnext ########
-def Dnext(t):
- return Sym( Onext( Sym(t)))
+ ###### Lnext ########
+ @property
+ def Lnext(self):
+  return self.invRot.Onext.Rot
 
-###### Oprev ########
-def Oprev(t):
- return Rot( Onext( Rot(t)))
+ ###### Rnext ########
+ @property
+ def Rnext(self):
+  return self.Rot.Onext.invRot
 
-###### Lprev ########
-def Lprev(t):
- return Sym( Onext(t))
+ ###### Dnext ########
+ @property
+ def Dnext(self):
+  return self.Sym.Onext.Sym
 
-###### Rprev ########
-def Rprev(t):
- a = Onext( Sym(t))
- a[0].org = t[0].dest
- print 'Rprev: a.org', a[0].org, 'a.dest', a[0].dest 
- return a
+ ###### Oprev ########
+ @property
+ def Oprev(self):
+  return self.Rot.Onext.Rot
 
-###### Dprev ########
-def Dprev(t):
- return invRot( Onext( invRot(t)))
+ ###### Lprev ########
+ @property
+ def Lprev(self):
+  return self.Onext.Sym
+ 
+ ###### Rprev ########
+ @property
+ def Rprev(self):
+  return self.Sym.Onext
+
+ ###### Dprev ########
+ @property
+ def Dprev(self):
+  return self.invRot.Onext.invRot
+
+# ###### Rprev ########
+# def Rprev(t):
+#  a = Onext( Sym(t))
+#  a.Org = t.Dest
+#  print 'Rprev: a.org', a.Org, 'a.dest', a.Dest 
+#  return a
+
 
 
 #####################################################
@@ -249,7 +271,7 @@ def MakeEdge():
 
  #return edge a as e[0], canonical edge in q
  a = q.e[0]
- return (a,q)
+ return a
 
 #####################
 ###    Connect    ###
@@ -257,11 +279,11 @@ def MakeEdge():
 def Connect(a, b): 
  e = MakeEdge()
 
- e[0].org  = a[0].dest
- e[0].dest = b[0].org
+ e.setOrg(a.Dest)
+ e.setDest(b.Org)
 
- Splice(e, Lnext(a))
- Splice(Sym(e), b)
+ Splice(e, a.Lnext)
+ Splice(e.Sym, b)
 
  return e
 
@@ -270,28 +292,28 @@ def Connect(a, b):
 ###    Splice     ###
 #####################
 def Splice(a, b):
- alpha = Rot( Onext(a))
- beta  = Rot( Onext(b))
+ alpha = a.Onext.Rot
+ beta  = b.Onext.Rot
 
  # assign temp edge variables
  # the [0] is the edge element
- p = b[0].next
- q = a[0].next
- r = beta[0].next
- s = alpha[0].next
+ p = b.next
+ q = a.next
+ r = beta.next
+ s = alpha.next
 
  # reassign the next values
- a[0].next = p
- b[0].next = q
- alpha[0].next = r
- beta[0].next = s
+ a.next     = p
+ b.next     = q
+ alpha.next = r
+ beta.next  = s
 
 #####################
 ###    Delete     ###
 #####################
 def DeleteEdge(e):
- Splice(e, Oprev(e))
- Splice(Sym(e), Oprev(Sym(e)))
+ Splice(e, e.Oprev)
+ Splice(e.Sym, e.Sym.Oprev)
 
 ##################################################
 ###########  Orientation Tests    ################
@@ -300,20 +322,23 @@ def DeleteEdge(e):
 ###### Right Of ########
 #takes a tuple x and quadedge e
 def RightOf(x, e):
- print 'RightOf: x:', x, 'e.dest:', e[0].dest, 'e.org:', e[0].org
- return CCW(x, e[0].dest, e[0].org)
+ print 'RightOf: x:', x, 'e.dest:', e.Dest, 'e.org:', e.Org
+ return CCW(x, e.Dest, e.Org)
 
 ###### Left OF ########
 #takes a tuple x and quadedge e
 def LeftOf(x, e):
- print 'LeftOf: x:', x, 'e.org:', e[0].org, 'e.dest:', e[0].dest
- return CCW(x, e[0].org, e[0].dest) 
+ print 'LeftOf: x:', x, 'e.org:', e.Org, 'e.dest:', e.Dest
+ return CCW(x, e.Org, e.Dest) 
+
+###### Valid ########
+def Valid(e, base):
+ return CCW(e.Dest, base.Dest, base.Org)
 
 ###### Counter Clockwise ########
 # takes three points as tuples
 def CCW(a, b, c):
-# a = tuple(a); b = tuple(b); c = tuple(c);
-
+ # a = tuple(a); b = tuple(b); c = tuple(c);
  print 'CCW: a:', a, 'b:', b,'c:', c 
  return True if (orient2d(a,b,c) > 0) else False
 
@@ -323,18 +348,11 @@ def InCircle(a, b, c, d):
  #a = tuple(a); b = tuple(b); c = tuple(c); d = tuple(d)
  return True if (incircle(a, b, c, d) > 0) else False
 
-###### In Circle ########
-def Valid(e, base):
- return CCW(e[0].dest, base[0].dest, base[0].org)
-
-
 ###############################################
 ###########  Splitting Sets     ################
 ###############################################
 
-#######################
-###    quickselect  ###
-#######################
+######    quickselect  ##########
 #http://stackoverflow.com/questions/19258457/python-quickselect-function-finding-the-median
 def QuickSelect(seq,k):
  k = len(seq) // 2
@@ -361,8 +379,6 @@ def QuickSelect(seq,k):
 ###    halfSet  ###
 #######################
 def HalfSet(s):
-
- 
 
  # # for odd number of points split an even set and add right side
  # if ((len(s) % 2) > 0):
@@ -440,7 +456,7 @@ def main(argv):
  print 'Read Node File v 1.0'
  print 'press -h for help'
 
- filename = 'test/4.node.txt'
+ filename = 'test/4.node'
 
  try: 
   opts, args = getopt.getopt(argv,"f:",["file="])
