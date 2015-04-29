@@ -65,8 +65,8 @@ def Delaunay(s):
    elif RightOf(ldi.Org, rdi):
     rdi = rdi.Rprev
    else:
-     print 'break'
-     break
+    print 'break'
+    break
 
   #create the base edge  
   basel = Connect(rdi.Sym, ldi)
@@ -107,11 +107,6 @@ def Delaunay(s):
     basel = Connect(basel.Sym, lcand.Sym)
 
   return (ldo, rdo)
-
-
-#map(tuple,x)
-
-
 
 #####################################################
 #############    Classes             ################
@@ -249,19 +244,9 @@ class Edge:
  def Dprev(self):
   return self.invRot.Onext.invRot
 
-# ###### Rprev ########
-# def Rprev(t):
-#  a = Onext( Sym(t))
-#  a.Org = t.Dest
-#  print 'Rprev: a.org', a.Org, 'a.dest', a.Dest 
-#  return a
-
-
-
 #####################################################
 ###########  Topological Operators   ################
 #####################################################
-
 
 #####################
 ###    MakeEdge   ###
@@ -338,14 +323,12 @@ def Valid(e, base):
 ###### Counter Clockwise ########
 # takes three points as tuples
 def CCW(a, b, c):
- # a = tuple(a); b = tuple(b); c = tuple(c);
  print 'CCW: a:', a, 'b:', b,'c:', c 
  return True if (orient2d(a,b,c) > 0) else False
 
 ###### In Circle ########
 # takes four points as tuples
 def InCircle(a, b, c, d):
- #a = tuple(a); b = tuple(b); c = tuple(c); d = tuple(d)
  return True if (incircle(a, b, c, d) > 0) else False
 
 ###############################################
@@ -379,23 +362,11 @@ def QuickSelect(seq,k):
 ###    halfSet  ###
 #######################
 def HalfSet(s):
+ left  = s[:len(s)/2]
+ right = s[len(s)/2:]
 
- # # for odd number of points split an even set and add right side
- # if ((len(s) % 2) > 0):
+ return left, right
 
- #  left, right = np.vsplit(s[0:-1],2)
- #  #add the extra to right side
- #  right = np.vstack([right,x[-1,:]])
-
- #  return left, right 
-
- # else:
-  left  = s[:len(s)/2]
-  right = s[len(s)/2:]
-  #left, right = np.vsplit(s,2)
-  return left, right
-
- #median = quickSelect(s,(len(s) // 2))
 
 
 ###############################################
@@ -411,40 +382,20 @@ def ParseFile(filename):
  # Parse the header
  head = re.split('  ', header)
  numVert = int(head[0])
-
- # Make an array that is (rotber of Vertices x 3)
- #v = np.zeros([numVert,2], dtype = float)
  v = []
 
  # fill the array
  for i in xrange(numVert): 
-
   l = f.readline().strip('\n')
   l = re.split(' ',l)
   l = filter(lambda a: a != '', l)
   line  = map(float, l)
-  #splits by the spaces and converts to floats 
-  # line = map(float, re.split('  ', f.readline().strip('\n')))
-  #drops the vertex numbe
-  #v[i] = line[-2:]
   v.append(tuple(line[-2:]))
 
- # sort the list
- #q = v.tolist()
- #q.sort()
  v.sort()
- #v = np.array(q)
-
- print v
 
  f.close()
-
  return v
-
-
-
- #when I need a tuple of the vertex
- #tuple(vertices[1,:].tolist())
 
 
 ################################
