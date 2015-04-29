@@ -7,6 +7,7 @@ from predicates import orient2d, incircle
 quadID = 0
 edgeID = 0
 quadlist = []
+edgelist = []
 
 #####################################################
 ########   Delauney Trianulation       ##############
@@ -61,12 +62,21 @@ def Delaunay(s):
 
   while True:
    if LeftOf(rdi.Org, ldi):
-    ldi = ldi.Lnext
-   elif RightOf(ldi.Org, rdi):
-    rdi = rdi.Rprev
-   else:
-     print 'break'
+    #my own added conditional. Fixes 
+    if (ldi.Lnext.Org == ldi.Org) or (ldi.Lnext.Dest == ldi.Org):
      break
+    else:
+     ldi = ldi.Lnext
+
+   elif RightOf(ldi.Org, rdi):
+    if (rdi.Rprev.Org == rdi.Org) or (rdi.Rprev.Dest == rdi.Org):
+     break
+    else:
+     rdi = rdi.Rprev
+
+   else:
+    print 'break'
+    break
 
   #create the base edge  
   basel = Connect(rdi.Sym, ldi)
@@ -128,6 +138,7 @@ class QuadEdge:
   quadID += 1
 
   # add quadEdge to List for reference
+  global edgelist
   quadlist.append(self)
 
   #initialize list of edges
@@ -165,6 +176,10 @@ class Edge:
   global edgeID
   self.id = edgeID  
   edgeID += 1
+
+  #added edge to edgelist
+  global edgelist
+  edgelist.append([self, False])
 
  #############################################
  #########  Edge Algebra Methods  ############
@@ -339,7 +354,7 @@ def Valid(e, base):
 # takes three points as tuples
 def CCW(a, b, c):
  # a = tuple(a); b = tuple(b); c = tuple(c);
- print 'CCW: a:', a, 'b:', b,'c:', c 
+ #print 'CCW: a:', a, 'b:', b,'c:', c 
  return True if (orient2d(a,b,c) > 0) else False
 
 ###### In Circle ########
@@ -397,6 +412,58 @@ def HalfSet(s):
 
  #median = quickSelect(s,(len(s) // 2))
 
+###############################################
+#####  Triangles from QuadEdge    #############
+###############################################
+def WriteFile(l):
+ triangles = []
+ count = 0
+
+ count, triangles = MakeFaces(l, count, triangles)
+
+
+
+def MakeFaces(a, count, triangles):
+ tri = []
+ print a.id
+ if edgelist[a.id][1]:
+  #already visited, base case
+  return count, triangles
+
+ elif (a.Lnext.id == a.id): 
+  #looping face, set visited 
+  edgelist[e.id][1] = True
+  return count, triangles
+
+ else:
+  # go arount the triangle
+  b = a.Lnext; c = b.Lnext
+
+  #record the unique triangle
+  tri.append(count)
+  count += 1
+
+  #record vertices
+  tri.append(a.Org); tri.append(b.Org); tri.append(c.Org)
+  triangles.append(tuple(tri))
+
+  # set edges in current triangle as visited
+  edgelist[a.id][1] = True; edgelist[b.id][1] = True; edgelist[c.id][1] = True; 
+
+  #recurse on each of the Sym edges
+  count = MakeFaces(a.Sym, count)
+  count = MakeFaces(b.Sym, count)
+  count = MakeFaces(c.Sym, count)
+
+  return count, triangles
+
+
+
+ 
+
+
+
+
 
 ###############################################
 ###########  File Handling     ################
@@ -405,11 +472,13 @@ def HalfSet(s):
 def ParseFile(filename):
  # Read the file and header
  f = open(filename, "r")
- header = f.readline()
+ header = f.readline().strip('\n')
  print header
 
  # Parse the header
- head = re.split('  ', header)
+ head = re.split(' ', header)
+ head = filter(lambda a: a != '', head)
+ head = map(int,head)
  numVert = int(head[0])
 
  # Make an array that is (rotber of Vertices x 3)
