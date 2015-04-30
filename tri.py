@@ -134,17 +134,17 @@ class QuadEdge:
   #initialize list of edges
   self.e = [Edge(),Edge(),Edge(),Edge()]
 
-  #Set the next pointers to infinity
-  self.e[0].next = self.e[0] #correct
-  self.e[1].next = self.e[3]
-  self.e[2].next = self.e[0]
-  self.e[3].next = self.e[1]
-
   #set the rotations of each edge
   self.e[0].rot = 0
   self.e[1].rot = 1
   self.e[2].rot = 2
   self.e[3].rot = 3
+
+  #Set the next pointers to infinity
+  self.e[0].next = self.e[0] #correct
+  self.e[1].next = self.e[3]
+  self.e[2].next = self.e[2]
+  self.e[3].next = self.e[1]
 
   # set the quadedge ID in each of the edges
   for i in xrange(3): 
