@@ -63,11 +63,11 @@ def Delaunay(s):
   while True:
    if LeftOf(rdi.Org, ldi):
     ldi = ldi.Lnext
-    print 'New ldi: ldi.Org:', ldi.Org, 'ldi.Dest:', ldi.Dest
+    print 'New ldi(id):', ldi.id, 'ldi.Org:', ldi.Org, 'ldi.Dest:', ldi.Dest
 
    elif RightOf(ldi.Org, rdi):
     rdi = rdi.Rprev
-    print 'New rdi: rdi.Org:', rdi.Org, 'rdi.Dest:', rdi.Dest
+    print 'New rdi(id):', rdi.id, 'rdi.Org:', rdi.Org, 'rdi.Dest:', rdi.Dest
 
    else:
     print 'break'
@@ -92,23 +92,32 @@ def Delaunay(s):
 
    if Valid(lcand, basel):
     while InCircle(basel.Dest, basel.Org, lcand.Dest, lcand.Onext.Dest):
-     t = lcand.Onext; DeleteEdge(lcand); lcand = t
+     print 'Resetting lcand to lcand.Onext (org) (dest):', lcand.Onext.Org, lcand.Onext.Dest
+     t = lcand.Onext
+     DeleteEdge(lcand)
+     lcand = t
 
    # symmetrically locate first R point to hit and delete R edges
    rcand = basel.Oprev
    if Valid(rcand, basel):
     while InCircle(basel.Dest, basel.Org, rcand.Dest, rcand.Oprev.Dest):
-     t = rcand.Oprev; DeleteEdge(rcand); rcand = t
+     print 'Resetting rcand to rcand.OPrev (org) (dest):', rcand.Oprev.Org, rcand.Oprev.Dest
+     t = rcand.Oprev
+     DeleteEdge(rcand)
+     rcand = t
 
    # if both lcand and rcand are invalid then basel L is tanget
-   if not Valid(lcand, basel) and not Valid(rcand, basel):
+   if (not Valid(lcand, basel)) and (not Valid(rcand, basel)):
+    print 'Both lcand and rcand are invalid, exiting loop'
     break
 
    # if both are valid then choose the right edge with incircle
-   if not Valid(lcand, basel) or (Valid(rcand, basel) and InCircle(lcand.Dest, lcand.Org, rcand.Org, rcand.Dest)):
+   if (not Valid(lcand, basel)) or (Valid(rcand, basel) and InCircle(lcand.Dest, lcand.Org, rcand.Org, rcand.Dest)):
     # add cross edge basel from rcand to basel.dest
+    print 'Connecting rcand to basel.Sym'
     basel = Connect(rcand, basel.Sym)
    else:
+    print 'Connecting basel.Sym to lcand.Sym'
     basel = Connect(basel.Sym, lcand.Sym)
 
   return (ldo, rdo)
@@ -125,6 +134,7 @@ class QuadEdge:
   # quadedge identification
   global quadID
   self.id = quadID
+  print 'Creating quadedge num:', quadID
   quadID += 1
 
   # add quadEdge to List for reference
@@ -279,6 +289,7 @@ def Connect(a, b):
 
  print 'Connect: splicing e and a.Lnext: (org) (dest)', a.Lnext.Org, a.Lnext.Dest
  Splice(e, a.Lnext)
+ print 'Connect: splicing e.Sym (org) (dest) and b: ', e.Sym.Org, a.Sym.Dest
  Splice(e.Sym, b)
 
  return e
@@ -328,8 +339,8 @@ def LeftOf(x, e):
  return CCW(x, e.Org, e.Dest) 
 
 ###### Valid ########
-def Valid(e, base):
- return CCW(e.Dest, base.Dest, base.Org)
+def Valid(e, basel):
+ return CCW(e.Dest, basel.Dest, basel.Org)
 
 ###### Counter Clockwise ########
 # takes three points as tuples
