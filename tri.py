@@ -62,25 +62,21 @@ def Delaunay(s):
 
   while True:
    if LeftOf(rdi.Org, ldi):
-    #my own added conditional. Fixes 
-    if (ldi.Lnext.Org == ldi.Org) or (ldi.Lnext.Dest == ldi.Org):
-     break
-    else:
-     ldi = ldi.Lnext
+    ldi = ldi.Lnext
+    print 'New ldi: ldi.Org:', ldi.Org, 'ldi.Dest:', ldi.Dest
 
    elif RightOf(ldi.Org, rdi):
-    if (rdi.Rprev.Org == rdi.Org) or (rdi.Rprev.Dest == rdi.Org):
-     break
-    else:
-     rdi = rdi.Rprev
+    rdi = rdi.Rprev
+    print 'New rdi: rdi.Org:', rdi.Org, 'rdi.Dest:', rdi.Dest
+
    else:
     print 'break'
     break
 
   #create the base edge  
+  print 'Connecting rdi.Sym and ldi:', rdi.Sym.Org, ldi.Org
   basel = Connect(rdi.Sym, ldi)
 
-  print 'Connect ldi.org and ldo.org:', ldi.Org, ldo.Org
 
   if ldi.Org == ldo.Org:
    ldo = basel.Sym
@@ -139,9 +135,9 @@ class QuadEdge:
   self.e = [Edge(),Edge(),Edge(),Edge()]
 
   #Set the next pointers to infinity
-  self.e[0].next = self.e[0]
+  self.e[0].next = self.e[0] #correct
   self.e[1].next = self.e[3]
-  self.e[2].next = self.e[2]
+  self.e[2].next = self.e[0]
   self.e[3].next = self.e[1]
 
   #set the rotations of each edge
@@ -281,6 +277,7 @@ def Connect(a, b):
  e.setOrg(a.Dest)
  e.setDest(b.Org)
 
+ print 'Connect: splicing e and a.Lnext: (org) (dest)', a.Lnext.Org, a.Lnext.Dest
  Splice(e, a.Lnext)
  Splice(e.Sym, b)
 
@@ -296,10 +293,10 @@ def Splice(a, b):
 
  # assign temp edge variables
  # the [0] is the edge element
- p = b.next
- q = a.next
- r = beta.next
- s = alpha.next
+ p = b.Onext
+ q = a.Onext
+ r = beta.Onext
+ s = alpha.Onext
 
  # reassign the next values
  a.next     = p
@@ -378,6 +375,14 @@ def HalfSet(s):
  left  = s[:len(s)/2]
  right = s[len(s)/2:]
 
+ # a = np.array(s)
+ # m = np.median(a[:,0])
+ # x = a[:,0].tolist()
+ # i = x.index(m)
+
+ # left = s[:i+1]
+ # right = s[i+1:]
+ print len(left), len(right)
  return left, right
 
 
@@ -390,39 +395,61 @@ def WriteFile(l):
 
  count, triangles = MakeFaces(l, count, triangles)
 
+ return triangles
+
+def Report(l):
+  print 'l.Org', l.Org
+  print 'l.Dest', l.Dest
+  print 'l.Onext.Dest', l.Onext.Dest
+  print 'l.Lnext.Dest', l.Lnext.Dest
+  print 'l.Rprev.Dest', l.Rprev.Dest
+  print 'l.Oprev.Dest', l.Oprev.Dest
 
 
 def MakeFaces(a, count, triangles):
  tri = []
- print a.id
+ # go arount the triangle
+ b = a.Lnext; c = b.Lnext
+ print 'a.id:', a.id, 'b.id', b.id, 'c.id', c.id
+ #print 'a.Org:', a.Org, 'b.Org', b.Org, 'c.Org', c.Org
+
  if edgelist[a.id][1]:
   #already visited, base case
+  print 'in loop base'
   return count, triangles
 
- elif (a.Lnext.id == a.id): 
-  #looping face, set visited 
-  edgelist[e.id][1] = True
-  return count, triangles
+ # elif (b.Dest == a.Org): 
+ #  #looping face, set visited 
+ #  #edgelist[b.id][1] = True
+ #  return count, triangles
+
+ # elif (a.id == c.id):
+ #  #another looping face
+ #  edgelist[b.id][1] = True
+ #  edgelist[c.id][1] = True
+ #  return count, triangles
 
  else:
-  # go arount the triangle
-  b = a.Lnext; c = b.Lnext
 
   #record the unique triangle
   tri.append(count)
   count += 1
 
+
   #record vertices
   tri.append(a.Org); tri.append(b.Org); tri.append(c.Org)
+  print 
+  'Recorded Triangle:', tri
   triangles.append(tuple(tri))
 
   # set edges in current triangle as visited
-  edgelist[a.id][1] = True; edgelist[b.id][1] = True; edgelist[c.id][1] = True; 
+  edgelist[a.id][1] = True; edgelist[b.id][1] = True; edgelist[c.id][1] = True
 
   #recurse on each of the Sym edges
-  count = MakeFaces(a.Sym, count)
-  count = MakeFaces(b.Sym, count)
-  count = MakeFaces(c.Sym, count)
+  print 'a.sym', a.Sym.id, 'b.sym', b.Sym.id, 'c.sym', c.Sym.id
+  count, triangles = MakeFaces(a.Sym, count, triangles)
+  count, triangles = MakeFaces(b.Sym, count, triangles)
+  count, triangles = MakeFaces(c.Sym, count, triangles)
 
   return count, triangles
 
@@ -453,8 +480,13 @@ def ParseFile(filename):
   line  = map(float, l)
   v.append(tuple(line[-2:]))
 
- v.sort()
+ edgelist = []
+ quadlist = []
 
+
+
+ v.sort()
+ print v
  f.close()
  return v
 
