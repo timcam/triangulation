@@ -6,8 +6,8 @@ from predicates import orient2d, incircle
 #set global variables
 quadID = 0
 edgeID = 0
-quadlist = []
-edgelist = []
+qlist = []
+#edgelist = []
 
 #####################################################
 ########   Delauney Trianulation       ##############
@@ -24,7 +24,7 @@ def Delaunay(s):
 
   print 'returning from base 2'
   return (a, a.Sym)
- 
+
  #base case with three (3) points
  elif (len(s) == 3):
   a = MakeEdge(); b = MakeEdge()
@@ -34,11 +34,13 @@ def Delaunay(s):
   b.setOrg(s[1]); b.setDest(s[2])
 
   if CCW(s[0],s[1],s[2]):
+   print 'cond A'
    c = Connect(b,a)
    print 'returning from base 3 case 1'
    return (a, b.Sym)
 
   elif CCW(s[0],s[2],s[1]):
+   print 'cond B'
    c = Connect(b,a)
    print 'returning from base 3 case 2'
    return (c.Sym, c)
@@ -63,11 +65,11 @@ def Delaunay(s):
   while True:
    if LeftOf(rdi.Org, ldi):
     ldi = ldi.Lnext
-    print 'New ldi(id):', ldi.id, 'ldi.Org:', ldi.Org, 'ldi.Dest:', ldi.Dest
+    print 'New ldi(id):', ldi.qid, 'ldi.Org:', ldi.Org, 'ldi.Dest:', ldi.Dest
 
    elif RightOf(ldi.Org, rdi):
     rdi = rdi.Rprev
-    print 'New rdi(id):', rdi.id, 'rdi.Org:', rdi.Org, 'rdi.Dest:', rdi.Dest
+    print 'New rdi(id):', rdi.qid, 'rdi.Org:', rdi.Org, 'rdi.Dest:', rdi.Dest
 
    else:
     print 'break'
@@ -133,101 +135,108 @@ class QuadEdge:
  def __init__(self):
   # quadedge identification
   global quadID
-  self.id = quadID
+  self.qid = quadID
   print 'Creating quadedge num:', quadID
   quadID += 1
 
   # add quadEdge to List for reference
-  global edgelist
-  quadlist.append(self)
+  global quadlist
+  qlist.append(self)
 
   #initialize list of edges
-  self.e = [Edge(),Edge(),Edge(),Edge()]
+  self.e = [Handle(),Handle(),Handle(),Handle()]
 
-  #set the rotations of each edge
-  self.e[0].rot = 0
-  self.e[1].rot = 1
-  self.e[2].rot = 2
-  self.e[3].rot = 3
+  #initialize next
+  self.next = [Handle, Handle, Handle, Handle]
+
+  #initialize Org
+  self.org = [(None, None), (None, None), (None, None), (None, None)]
+
+  #set the orientations of each edge
+  self.e[0].ort = 0
+  self.e[1].ort = 1
+  self.e[2].ort = 2
+  self.e[3].ort = 3
 
   #Set the next pointers to infinity
-  self.e[0].next = self.e[0] #correct
-  self.e[1].next = self.e[3]
-  self.e[2].next = self.e[2]
-  self.e[3].next = self.e[1]
+  self.next[0] = self.e[0] #correct
+  self.next[1] = self.e[3]
+  self.next[2] = self.e[2]
+  self.next[3] = self.e[1]
 
   # set the quadedge ID in each of the edges
   for i in xrange(3): 
-   self.e[i].qid = self.id
+   self.e[i].qid = self.qid
 
 
 #############################
 ###    Edge Class        ###
 #############################
-class Edge:
+class Handle:
  def __init__(self):
   #self.id   = reference
-  self.next  = Edge
-  self.org   = (None, None)
-  self.rot   = 0   # rotation in quadedge 
-  self.qid   = 0   # quadedge identification
+  self.ort = 0      # orientation in quadedge 
+  self.qid = 0      # quadedge identification
+  self.vis = False  #used for output searching
 
   # edge identification
   global edgeID
   self.id = edgeID  
   edgeID += 1
 
-  #added edge to edgelist
-  global edgelist
-  edgelist.append([self, False])
+  # #added edge to edgelist
+  # global edgelist
+  # edgelist.append(self)
 
  #############################################
  #########  Edge Algebra Methods  ############
  #############################################
  @property
  def Org(self):
-  return self.org
+  return qlist[self.qid].org[self.ort]
 
  @property
  def Dest(self):
-  return self.Sym.org
+  return self.Sym.Org
 
  def setOrg(self, vertex):
-  self.org = vertex
+  qlist[self.qid].org[self.ort] = vertex
 
  def setDest(self, vertex):
   self.Sym.setOrg(vertex)
+
+ def setNext(self, edge):
+  qlist[self.qid].next[self.ort] = edge
 
  ####### Rotate ########
  @property
  def Rot(self):
   #look up the parent quadedge and return the CCW edge
-  if (self.rot < 3):
-   return quadlist[self.qid].e[self.rot+1]
+  if (self.ort < 3):
+   return qlist[self.qid].e[self.ort+1]
   else:
-   return quadlist[self.qid].e[0]
+   return qlist[self.qid].e[0]
 
  #### Inv Rotate ######
  @property
  def invRot(self):
-  if (self.rot > 0):
-   return quadlist[self.qid].e[self.rot-1]
+  if (self.ort > 0):
+   return qlist[self.qid].e[self.ort-1]
   else:
-   return quadlist[self.qid].e[3]
+   return qlist[self.qid].e[3]
 
  ###### sym #########
  @property
  def Sym(self):
-  q = quadlist[self.qid]
-  if self.rot > 1 :
-   return q.e[self.rot -2]
+  if self.ort < 2 :
+   return qlist[self.qid].e[self.ort +2]
   else:
-   return q.e[self.rot +2]
+   return qlist[self.qid].e[self.ort -2]
 
  ###### Onext ########
  @property
  def Onext(self):
-  return self.next
+  return qlist[self.qid].next[self.ort]
 
  ###### Lnext ########
  @property
@@ -299,6 +308,7 @@ def Connect(a, b):
 ###    Splice     ###
 #####################
 def Splice(a, b):
+ #holders for edges
  alpha = a.Onext.Rot
  beta  = b.Onext.Rot
 
@@ -310,10 +320,12 @@ def Splice(a, b):
  s = alpha.Onext
 
  # reassign the next values
- a.next     = p
- b.next     = q
- alpha.next = r
- beta.next  = s
+ a.setNext = p
+ b.setNext = q
+
+ #reassign their 
+ a.Onext.Rot.setNext = r
+ b.Onext.Rot.setNext = s
 
 #####################
 ###    Delete     ###
@@ -329,7 +341,7 @@ def DeleteEdge(e):
 ###### Right Of ########
 #takes a tuple x and quadedge e
 def RightOf(x, e):
- print 'RightOf: x:', x, 'e.dest:', e.Dest, 'e.org:', e.Org
+ print 'RightOf: x:', x, 'e.Dest:', e.Dest, 'e.Org:', e.Org
  return CCW(x, e.Dest, e.Org)
 
 ###### Left OF ########
