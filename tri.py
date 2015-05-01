@@ -165,7 +165,7 @@ class QuadEdge:
   self.next[3] = self.e[1]
 
   # set the quadedge ID in each of the edges
-  for i in xrange(3): 
+  for i in xrange(4): 
    self.e[i].qid = self.qid
 
 
