@@ -28,6 +28,7 @@ def Delaunay(s):
  #base case with three (3) points
  elif (len(s) == 3):
   a = MakeEdge(); b = MakeEdge()
+
   Splice(a.Sym, b)
 
   a.setOrg(s[0]); a.setDest(s[1])
@@ -144,25 +145,27 @@ class QuadEdge:
   qlist.append(self)
 
   #initialize list of edges
-  self.e = [Handle(),Handle(),Handle(),Handle()]
+  #self.e =
+
+  self.next = [Handle(qid,0), Handle(qid,3), Handle(qid,2), Handle(qid,1)]
 
   #initialize next
-  self.next = [Handle, Handle, Handle, Handle]
+  #self.next = [self.e[0], self.e[3], self.e[2], self.e[1]]
 
   #initialize Org
   self.org = [(None, None), (None, None), (None, None), (None, None)]
 
   #set the orientations of each edge
-  self.e[0].ort = 0
-  self.e[1].ort = 1
-  self.e[2].ort = 2
-  self.e[3].ort = 3
+  self.next[0].ort = 0
+  self.next[1].ort = 3
+  self.next[2].ort = 2
+  self.next[3].ort = 1
 
   #Set the next pointers to infinity
-  self.next[0] = self.e[0] #correct
-  self.next[1] = self.e[3]
-  self.next[2] = self.e[2]
-  self.next[3] = self.e[1]
+  # self.next[0] = self.e[0] #correct
+  # self.next[1] = self.e[3]
+  # self.next[2] = self.e[2]
+  # self.next[3] = self.e[1]
 
   # set the quadedge ID in each of the edges
   for i in xrange(4): 
@@ -173,10 +176,10 @@ class QuadEdge:
 ###    Edge Class        ###
 #############################
 class Handle:
- def __init__(self):
+ def __init__(self, qid, ort):
   #self.id   = reference
-  self.ort = 0      # orientation in quadedge 
-  self.qid = 0      # quadedge identification
+  self.ort = ort      # orientation in quadedge 
+  self.qid = qid      # quadedge identification
   self.vis = False  #used for output searching
 
   # edge identification
@@ -205,17 +208,21 @@ class Handle:
  def setDest(self, vertex):
   self.Sym.setOrg(vertex)
 
- def setNext(self, edge):
-  qlist[self.qid].next[self.ort] = edge
+ def setNext(self, hand):
+
+  qlist[self.qid].next[self.ort].qid = hand.qid
+  qlist[self.qid].next[self.ort].ort = hand.ort
+
 
  ####### Rotate ########
  @property
  def Rot(self):
   #look up the parent quadedge and return the CCW edge
   if (self.ort < 3):
-   return qlist[self.qid].e[self.ort+1]
+    return Handle(self.qid, self.ort +1)
+   self.ort = self.ort+1
   else:
-   return qlist[self.qid].e[0]
+   return Handle(self.qid, 0)
 
  #### Inv Rotate ######
  @property
@@ -236,7 +243,9 @@ class Handle:
  ###### Onext ########
  @property
  def Onext(self):
-  return qlist[self.qid].next[self.ort]
+
+  temp = qlist[self.qid].next(self.ort)
+  return Handle(temp.qid, temp.ort)
 
  ###### Lnext ########
  @property
@@ -296,6 +305,8 @@ def Connect(a, b):
  e.setOrg(a.Dest)
  e.setDest(b.Org)
 
+ print 'Connect: e.Org:', e.Org, 'e.Dest', e.Dest
+
  print 'Connect: splicing e and a.Lnext: (org) (dest)', a.Lnext.Org, a.Lnext.Dest
  Splice(e, a.Lnext)
  print 'Connect: splicing e.Sym (org) (dest) and b: ', e.Sym.Org, a.Sym.Dest
@@ -320,12 +331,12 @@ def Splice(a, b):
  s = alpha.Onext
 
  # reassign the next values
- a.setNext = p
- b.setNext = q
+ a.setNext(p)
+ b.setNext(q)
 
  #reassign their 
- a.Onext.Rot.setNext = r
- b.Onext.Rot.setNext = s
+ a.Onext.Rot.setNext(r)
+ b.Onext.Rot.setNext(s)
 
 #####################
 ###    Delete     ###
@@ -420,10 +431,13 @@ def WriteFile(l):
 
  return triangles
 
+
 def Report(l):
   print 'l.Org', l.Org
   print 'l.Dest', l.Dest
+  print 'l.Onext.Org', l.Onext.Org
   print 'l.Onext.Dest', l.Onext.Dest
+  print 'l.Lnext.Org', l.Lnext.Org
   print 'l.Lnext.Dest', l.Lnext.Dest
   print 'l.Rprev.Dest', l.Rprev.Dest
   print 'l.Oprev.Dest', l.Oprev.Dest
