@@ -156,10 +156,10 @@ class QuadEdge:
   self.org = [(None, None), (None, None), (None, None), (None, None)]
 
   #set the orientations of each edge
-  self.next[0].ort = 0
-  self.next[1].ort = 3
-  self.next[2].ort = 2
-  self.next[3].ort = 1
+  # self.next[0].ort = 0
+  # self.next[1].ort = 3
+  # self.next[2].ort = 2
+  # self.next[3].ort = 1
 
   #Set the next pointers to infinity
   # self.next[0] = self.e[0] #correct
@@ -167,9 +167,9 @@ class QuadEdge:
   # self.next[2] = self.e[2]
   # self.next[3] = self.e[1]
 
-  # set the quadedge ID in each of the edges
-  for i in xrange(4): 
-   self.e[i].qid = self.qid
+  # # set the quadedge ID in each of the edges
+  # for i in xrange(4): 
+  #  self.e[i].qid = self.qid
 
 
 #############################
@@ -206,7 +206,12 @@ class Handle:
   qlist[self.qid].org[self.ort] = vertex
 
  def setDest(self, vertex):
-  self.Sym.setOrg(vertex)
+  if self.ort < 2 :
+    qlist[self.qid].org[self.ort+2] = vertex
+  else:
+    qlist[self.qid].org[self.ort-2] = vertex
+
+
 
  def setNext(self, hand):
 
@@ -220,7 +225,6 @@ class Handle:
   #look up the parent quadedge and return the CCW edge
   if (self.ort < 3):
     return Handle(self.qid, self.ort +1)
-   self.ort = self.ort+1
   else:
    return Handle(self.qid, 0)
 
@@ -228,24 +232,23 @@ class Handle:
  @property
  def invRot(self):
   if (self.ort > 0):
-   return qlist[self.qid].e[self.ort-1]
+   return Handle(self.qid, self.ort +1)
   else:
-   return qlist[self.qid].e[3]
+   return Handle(self.qid, 3)
 
  ###### sym #########
  @property
  def Sym(self):
   if self.ort < 2 :
-   return qlist[self.qid].e[self.ort +2]
+   return Handle(self.qid, self.ort +2)
   else:
-   return qlist[self.qid].e[self.ort -2]
+   return Handle(self.qid, self.ort -2)
 
  ###### Onext ########
  @property
  def Onext(self):
-
-  temp = qlist[self.qid].next(self.ort)
-  return Handle(temp.qid, temp.ort)
+  tmp = qlist[self.qid].next(self.ort)
+  return Handle(tmp.qid, tmp.ort)
 
  ###### Lnext ########
  @property
