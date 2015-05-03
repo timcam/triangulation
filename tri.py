@@ -146,14 +146,14 @@ class QuadEdge:
 
   #initialize list of edges
   #self.e =
-
-  self.next = [Handle(qid,0), Handle(qid,3), Handle(qid,2), Handle(qid,1)]
+  self.org = [(None, None), (None, None), (None, None), (None, None)]
+  self.next = [Handle(self.qid,0), Handle(self.qid,3), Handle(self.qid,2), Handle(self.qid,1)]
 
   #initialize next
   #self.next = [self.e[0], self.e[3], self.e[2], self.e[1]]
 
   #initialize Org
-  self.org = [(None, None), (None, None), (None, None), (None, None)]
+
 
   #set the orientations of each edge
   # self.next[0].ort = 0
@@ -211,10 +211,7 @@ class Handle:
   else:
     qlist[self.qid].org[self.ort-2] = vertex
 
-
-
  def setNext(self, hand):
-
   qlist[self.qid].next[self.ort].qid = hand.qid
   qlist[self.qid].next[self.ort].ort = hand.ort
 
@@ -232,7 +229,7 @@ class Handle:
  @property
  def invRot(self):
   if (self.ort > 0):
-   return Handle(self.qid, self.ort +1)
+   return Handle(self.qid, self.ort -1)
   else:
    return Handle(self.qid, 3)
 
@@ -247,7 +244,7 @@ class Handle:
  ###### Onext ########
  @property
  def Onext(self):
-  tmp = qlist[self.qid].next(self.ort)
+  tmp = qlist[self.qid].next[self.ort]
   return Handle(tmp.qid, tmp.ort)
 
  ###### Lnext ########
@@ -296,8 +293,7 @@ def MakeEdge():
  q = QuadEdge()
 
  #return edge a as e[0], canonical edge in q
- a = q.e[0]
- return a
+ return Handle(q.qid, q.next[0].ort)
 
 #####################
 ###    Connect    ###
@@ -311,8 +307,9 @@ def Connect(a, b):
  print 'Connect: e.Org:', e.Org, 'e.Dest', e.Dest
 
  print 'Connect: splicing e and a.Lnext: (org) (dest)', a.Lnext.Org, a.Lnext.Dest
+ print 'a.Lnext. (qid):', a.Lnext.qid, 'ort:', a.Lnext.ort
  Splice(e, a.Lnext)
- print 'Connect: splicing e.Sym (org) (dest) and b: ', e.Sym.Org, a.Sym.Dest
+ print 'Connect: splicing e.Sym (org) (dest) and b: ', e.Sym.Org, e.Sym.Dest
  Splice(e.Sym, b)
 
  return e
@@ -322,9 +319,13 @@ def Connect(a, b):
 ###    Splice     ###
 #####################
 def Splice(a, b):
+ print 'entering Splice: a.qid, ort', a.qid, a.ort, 'b.qid, ort:', b.qid, b.ort, 'a.org, dest', a.Org, a.Dest
  #holders for edges
  alpha = a.Onext.Rot
  beta  = b.Onext.Rot
+
+ print 'alpha.qid, ort', alpha.qid, alpha.ort,
+ print 'beta.qid, ort:', beta.qid, beta.ort
 
  # assign temp edge variables
  # the [0] is the edge element
@@ -337,9 +338,24 @@ def Splice(a, b):
  a.setNext(p)
  b.setNext(q)
 
+ print 'a (qid) (ort)' , a.qid, a.ort, 'a.Next. (qid) (ort)', a.Onext.qid, a.Onext.ort
+ print 'b (qid) (ort)' , b.qid, b.ort, 'b.Next. (qid) (ort)', b.Onext.qid, b.Onext.ort
+ # print 'r (qid) (ort)', r.qid, r.ort
+ # print 's (qid) (ort)', s.qid, s.ort
+
  #reassign their 
- a.Onext.Rot.setNext(r)
- b.Onext.Rot.setNext(s)
+ alpha.setNext(r)
+ beta.setNext(s)
+
+ print 'a` (qid) (ort)' , alpha.qid, alpha.ort, 'a`.Next. (qid) (ort)', alpha.Onext.qid, alpha.Onext.ort
+ print 'b` (qid) (ort)' , beta.qid, beta.ort, 'b`.Next. (qid) (ort)', beta.Onext.qid, beta.Onext.ort
+
+ print 'a (org) (dest)', a.Org, a.Dest
+ print 'b (org) (dest)', b.Org, b.Dest
+
+ print 'b.(qid) (ort)', b.qid,  b.ort
+ print 'b.Lnext. (qid) (ort)', b.Lnext.qid,  b.Lnext.ort
+ print 'b. (invRot)(qid) (ort)', b.invRot.qid,  b.invRot.ort
 
 #####################
 ###    Delete     ###
@@ -563,6 +579,15 @@ def main(argv):
 
  vertices = ParseFile(filename)
  print filename
+
+ # print 'entering Delaunay'
+ # l,r = Delaunay(vertices)
+
+ # print 'reporting l'
+ # Report(l)
+
+ # print 'reporting r'
+ # Report(r)
 
 
 
