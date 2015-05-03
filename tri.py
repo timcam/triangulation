@@ -2,6 +2,7 @@ import sys, getopt, math, re, csv
 import numpy as np
 from array import array
 from predicates import orient2d, incircle
+from collections import deque
 
 #set global variables
 quadID = 0
@@ -147,6 +148,7 @@ class QuadEdge:
   #initialize list of edges
   #self.e =
   self.org = [(None, None), (None, None), (None, None), (None, None)]
+  self.vis = [False, False, False, False]
   self.next = [Handle(self.qid,0), Handle(self.qid,3), Handle(self.qid,2), Handle(self.qid,1)]
 
   #initialize next
@@ -180,7 +182,6 @@ class Handle:
   #self.id   = reference
   self.ort = ort      # orientation in quadedge 
   self.qid = qid      # quadedge identification
-  self.vis = False  #used for output searching
 
   # edge identification
   global edgeID
@@ -194,6 +195,8 @@ class Handle:
  #############################################
  #########  Edge Algebra Methods  ############
  #############################################
+
+ ###queries###
  @property
  def Org(self):
   return qlist[self.qid].org[self.ort]
@@ -202,6 +205,12 @@ class Handle:
  def Dest(self):
   return self.Sym.Org
 
+ @property
+ def Vis(self):
+  return qlist[self.qid].vis[self.ort]
+
+
+ ### set statements ####
  def setOrg(self, vertex):
   qlist[self.qid].org[self.ort] = vertex
 
@@ -215,6 +224,10 @@ class Handle:
   qlist[self.qid].next[self.ort].qid = hand.qid
   qlist[self.qid].next[self.ort].ort = hand.ort
 
+ @property
+ def setVis(self):
+  qlist[self.qid].vis[self.ort] = True
+ 
 
  ####### Rotate ########
  @property
@@ -451,6 +464,7 @@ def WriteFile(l):
  return triangles
 
 
+
 def Report(l):
   print 'l.Org', l.Org
   print 'l.Dest', l.Dest
@@ -462,52 +476,99 @@ def Report(l):
   print 'l.Oprev.Dest', l.Oprev.Dest
 
 
-def MakeFaces(a, count, triangles):
- tri = []
- # go arount the triangle
- b = a.Lnext; c = b.Lnext
- print 'a.id:', a.id, 'b.id', b.id, 'c.id', c.id
- #print 'a.Org:', a.Org, 'b.Org', b.Org, 'c.Org', c.Org
+def MakeFaces(l):
+ queue = deque([l])
+ count = 0
 
- if edgelist[a.id][1]:
-  #already visited, base case
-  print 'in loop base'
-  return count, triangles
+ #remove outer edges
+ a = l.Sym
+ a.setVis
+ start = a.Org
+ a = a.Lnext
 
- # elif (b.Dest == a.Org): 
- #  #looping face, set visited 
- #  #edgelist[b.id][1] = True
+ while (a.Org != start):
+  a.setVis
+  a = a.Lnext
+  
+ #start with the leftmost triangle in the queue
+ while (len(queue) > 0):
+  a = queue.popleft()
+
+  #check if it has been visited
+  if a.Vis and (len(queue) > 0):
+   a = queue.popleft()
+  elif a.Vis:
+   break
+
+  #if not, proceed with reporting
+  else:
+   #print 'start (Org) (Dest)', a.Org, a.Dest
+   tmp = [count]
+   count += 1
+   a.setVis
+   tmp.append(a.Org)
+   start = a.Org
+   a = a.Lnext
+
+   #after first edge, report other two edges
+   while (a.Org != start):
+    a.setVis
+    tmp.append(a.Org)
+
+    if not a.Sym.Vis:
+     queue.append(a.Sym)
+     #print 'adding to queue a.Sym (Org) (Dest)', a.Sym.Org, a.Sym.Dest
+
+    a = a.Lnext
+
+   print tmp[0], tmp[1], tmp[2], tmp[3]
+   tmp = []
+
+ # tri = []
+ # # go arount the triangle
+ # b = a.Lnext; c = b.Lnext
+ # print 'a.id:', a.id, 'b.id', b.id, 'c.id', c.id
+ # #print 'a.Org:', a.Org, 'b.Org', b.Org, 'c.Org', c.Org
+
+ # if edgelist[a.id][1]:
+ #  #already visited, base case
+ #  print 'in loop base'
  #  return count, triangles
 
- # elif (a.id == c.id):
- #  #another looping face
- #  edgelist[b.id][1] = True
- #  edgelist[c.id][1] = True
+ # # elif (b.Dest == a.Org): 
+ # #  #looping face, set visited 
+ # #  #edgelist[b.id][1] = True
+ # #  return count, triangles
+
+ # # elif (a.id == c.id):
+ # #  #another looping face
+ # #  edgelist[b.id][1] = True
+ # #  edgelist[c.id][1] = True
+ # #  return count, triangles
+
+ # else:
+
+ #  #record the unique triangle
+ #  tri.append(count)
+ #  count += 1
+
+
+ #  #record vertices
+ #  tri.append(a.Org); tri.append(b.Org); tri.append(c.Org)
+ #  print 
+ #  'Recorded Triangle:', tri
+ #  triangles.append(tuple(tri))
+
+ #  # set edges in current triangle as visited
+ #  edgelist[a.id][1] = True; edgelist[b.id][1] = True; edgelist[c.id][1] = True
+
+ #  #recurse on each of the Sym edges
+ #  print 'a.sym', a.Sym.id, 'b.sym', b.Sym.id, 'c.sym', c.Sym.id
+ #  count, triangles = MakeFaces(a.Sym, count, triangles)
+ #  count, triangles = MakeFaces(b.Sym, count, triangles)
+ #  count, triangles = MakeFaces(c.Sym, count, triangles)
+
  #  return count, triangles
-
- else:
-
-  #record the unique triangle
-  tri.append(count)
-  count += 1
-
-
-  #record vertices
-  tri.append(a.Org); tri.append(b.Org); tri.append(c.Org)
-  print 
-  'Recorded Triangle:', tri
-  triangles.append(tuple(tri))
-
-  # set edges in current triangle as visited
-  edgelist[a.id][1] = True; edgelist[b.id][1] = True; edgelist[c.id][1] = True
-
-  #recurse on each of the Sym edges
-  print 'a.sym', a.Sym.id, 'b.sym', b.Sym.id, 'c.sym', c.Sym.id
-  count, triangles = MakeFaces(a.Sym, count, triangles)
-  count, triangles = MakeFaces(b.Sym, count, triangles)
-  count, triangles = MakeFaces(c.Sym, count, triangles)
-
-  return count, triangles
 
 
 
