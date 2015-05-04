@@ -476,9 +476,13 @@ def Report(l):
   print 'l.Oprev.Dest', l.Oprev.Dest
 
 
-def MakeFaces(l):
+def MakeFaces(l, v, name):
+ filename = 'test/' + name + '.ele'
+ f = open('filename', 'w')
+ f.write(str(len(v))+ '  3  0\n')
+
  queue = deque([l])
- count = 0
+ count = 1
 
  #remove outer edges
  a = l.Sym
@@ -506,14 +510,14 @@ def MakeFaces(l):
    tmp = [count]
    count += 1
    a.setVis
-   tmp.append(a.Org)
+   tmp.append(v.index(a.Org)+1)
    start = a.Org
    a = a.Lnext
 
    #after first edge, report other two edges
    while (a.Org != start):
     a.setVis
-    tmp.append(a.Org)
+    tmp.append(v.index(a.Org)+1)
 
     if not a.Sym.Vis:
      queue.append(a.Sym)
@@ -521,8 +525,11 @@ def MakeFaces(l):
 
     a = a.Lnext
 
+   f.write(str(tmp))
    print tmp[0], tmp[1], tmp[2], tmp[3]
    tmp = []
+
+ f.close()
 
  # tri = []
  # # go arount the triangle
@@ -600,12 +607,14 @@ def ParseFile(filename):
  edgelist = []
  quadlist = []
 
-
-
+ v = list(u)
  v.sort()
- print v
+ 
  f.close()
- return v
+ print 'unsorted u:', u
+ print 'sortedv v:', v
+
+ return u, v
 
 
 ################################
@@ -638,7 +647,8 @@ def main(argv):
    print 'File not valid'
    sys.exit()
 
- vertices = ParseFile(filename)
+ u, v = ParseFile(filename)
+
  print filename
 
  # print 'entering Delaunay'
