@@ -1,4 +1,4 @@
-import sys, getopt, math, re, csv
+import sys, getopt, math, re, csv, time
 import numpy as np
 from array import array
 from predicates import orient2d, incircle
@@ -449,15 +449,6 @@ def HalfSet(s):
 ###############################################
 #####  Triangles from QuadEdge    #############
 ###############################################
-def WriteFile(l):
- triangles = []
- count = 0
-
- count, triangles = MakeFaces(l, count, triangles)
-
- return triangles
-
-
 
 def Report(l):
   print 'l.Org', l.Org
@@ -471,9 +462,9 @@ def Report(l):
 
 
 def MakeFaces(l, v, name):
- filename = 'test/' + name + '.ele'
+ filename = name + '.ele'
  f = open(filename, 'w')
- print f
+ # print f
 
  towrite = deque()
  queue = deque([l])
@@ -524,7 +515,7 @@ def MakeFaces(l, v, name):
 
    line = str(tmp[0]) + '  ' + str(tmp[1])  + '  ' + str(tmp[2])  + '  ' + str(tmp[3]) +'\n'
    towrite.append(line)
-   print tmp[0], tmp[1], tmp[2], tmp[3]
+   # print tmp[0], tmp[1], tmp[2], tmp[3]
    tmp = []
 
  #write the header
@@ -536,6 +527,7 @@ def MakeFaces(l, v, name):
   f.write(towrite.popleft())
 
  f.close()
+ return count-1
 
 
 
@@ -547,7 +539,7 @@ def ParseFile(filename):
  # Read the file and header
  f = open(filename, "r")
  header = f.readline().strip('\n')
- print header
+ # print header
 
  # Parse the header
  head = re.split(' ', header)
@@ -571,8 +563,8 @@ def ParseFile(filename):
  v.sort()
  
  f.close()
- print 'unsorted u:', u
- print 'sortedv v:', v
+ # print 'unsorted u:', u
+ # print 'sortedv v:', v
 
  return u, v
 
@@ -608,8 +600,19 @@ def main(argv):
    sys.exit()
 
  u, v = ParseFile(filename)
+ print 'Successfully parsed:', filename
+ print 'Triangulating', len(v), 'points' 
 
- print filename
+ start = time.time()
+ l,r = Delaunay(v)
+ end = time.time()
+ print 'Elapsed time was:', end-start, 'seconds'
+
+ outname = filename.split('.')
+ count = MakeFaces(l,u,outname[0])
+ print 'Wrote', str(count), 'triangles to file:', outname[0] + '.ele'
+
+
 
  # print 'entering Delaunay'
  # l,r = Delaunay(vertices)
