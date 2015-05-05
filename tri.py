@@ -478,9 +478,10 @@ def Report(l):
 
 def MakeFaces(l, v, name):
  filename = 'test/' + name + '.ele'
- f = open('filename', 'w')
- f.write(str(len(v))+ '  3  0\n')
+ f = open(filename, 'w')
+ print f
 
+ towrite = deque()
  queue = deque([l])
  count = 1
 
@@ -496,6 +497,8 @@ def MakeFaces(l, v, name):
   
  #start with the leftmost triangle in the queue
  while (len(queue) > 0):
+  #f.write('\n')
+
   a = queue.popleft()
 
   #check if it has been visited
@@ -524,58 +527,21 @@ def MakeFaces(l, v, name):
      #print 'adding to queue a.Sym (Org) (Dest)', a.Sym.Org, a.Sym.Dest
 
     a = a.Lnext
-
-   f.write(str(tmp))
+   
+   line = str(tmp[0]) + '  ' + str(tmp[1])  + '  ' + str(tmp[2])  + '  ' + str(tmp[3]) +'\n'
+   towrite.append(line)
    print tmp[0], tmp[1], tmp[2], tmp[3]
    tmp = []
 
+ #write the header
+ header = str(count-1)+ '  3  0\n'
+ f.write(header)
+
+ #go through the list of lines and write them
+ while len(towrite) > 0:
+  f.write(towrite.popleft())
+
  f.close()
-
- # tri = []
- # # go arount the triangle
- # b = a.Lnext; c = b.Lnext
- # print 'a.id:', a.id, 'b.id', b.id, 'c.id', c.id
- # #print 'a.Org:', a.Org, 'b.Org', b.Org, 'c.Org', c.Org
-
- # if edgelist[a.id][1]:
- #  #already visited, base case
- #  print 'in loop base'
- #  return count, triangles
-
- # # elif (b.Dest == a.Org): 
- # #  #looping face, set visited 
- # #  #edgelist[b.id][1] = True
- # #  return count, triangles
-
- # # elif (a.id == c.id):
- # #  #another looping face
- # #  edgelist[b.id][1] = True
- # #  edgelist[c.id][1] = True
- # #  return count, triangles
-
- # else:
-
- #  #record the unique triangle
- #  tri.append(count)
- #  count += 1
-
-
- #  #record vertices
- #  tri.append(a.Org); tri.append(b.Org); tri.append(c.Org)
- #  print 
- #  'Recorded Triangle:', tri
- #  triangles.append(tuple(tri))
-
- #  # set edges in current triangle as visited
- #  edgelist[a.id][1] = True; edgelist[b.id][1] = True; edgelist[c.id][1] = True
-
- #  #recurse on each of the Sym edges
- #  print 'a.sym', a.Sym.id, 'b.sym', b.Sym.id, 'c.sym', c.Sym.id
- #  count, triangles = MakeFaces(a.Sym, count, triangles)
- #  count, triangles = MakeFaces(b.Sym, count, triangles)
- #  count, triangles = MakeFaces(c.Sym, count, triangles)
-
- #  return count, triangles
 
 
 
@@ -607,7 +573,7 @@ def ParseFile(filename):
  edgelist = []
  quadlist = []
 
- v = list(u)
+ u = list(v)
  v.sort()
  
  f.close()
