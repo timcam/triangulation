@@ -63,14 +63,14 @@ def Delaunay(s, a):
   elif a == 'x':
    left, right = Alternating(s, 'x')
 
-   ldo, ldi = Delaunay(left, 'y');
-   rdi, rdo = Delaunay(right, 'y');
+   ldo, ldi = Delaunay(left, 'y'); 
+   rdi, rdo = Delaunay(right, 'y'); 
 
   else:
-   left, right = Alternating(s, 'y')
+   bottom, top = Alternating(s, 'y')
 
-   ldo, ldi = Delaunay(left, 'x');
-   rdi, rdo = Delaunay(right, 'x'); 
+   ldo, ldi = Delaunay(bottom, 'x'); #bottom left bottom right
+   rdi, rdo = Delaunay(top, 'x'); #top left top right
 
   # print 'ldo.org:', ldo.Org, 'ldo.dest:', ldo.Dest
   # print 'ldi.org:', ldi.Org, 'ldi.dest:', ldi.Dest
