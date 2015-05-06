@@ -1,4 +1,4 @@
-import sys, getopt, math, re, csv
+import sys, getopt, math, re, csv, random
 import numpy as np
 from array import array
 from predicates import orient2d, incircle
@@ -13,7 +13,7 @@ qlist = []
 #####################################################
 ########   Delauney Trianulation       ##############
 #####################################################
-def Delaunay(s):
+def Delaunay(s, a):
  #takes a list of tuples as points
 
  #Base case with two points
@@ -54,10 +54,27 @@ def Delaunay(s):
   #case with 4 or more points
   #split the set again and then zip together
  else:
+  if a == 'n':
   left, right = HalfSet(s)
 
-  ldo, ldi = Delaunay(left);
-  rdi, rdo = Delaunay(right);
+  ldo, ldi = Delaunay(left, a);
+  rdi, rdo = Delaunay(right, a);
+
+  elif a == 'x':
+   left, right = Alternating(s, 'x')
+
+   ldo, ldi = Delaunay(left, 'y');
+   rdi, rdo = Delaunay(right, 'y');
+
+  else:
+   left, right = Alternating(s, 'y')
+
+   ldo, ldi = Delaunay(left, 'x');
+   rdi, rdo = Delaunay(right, 'x');   
+
+
+
+
 
   print 'ldo.org:', ldo.Org, 'ldo.dest:', ldo.Dest
   print 'ldi.org:', ldi.Org, 'ldi.dest:', ldi.Dest
@@ -413,26 +430,94 @@ def InCircle(a, b, c, d):
 
 ######    quickselect  ##########
 #http://stackoverflow.com/questions/19258457/python-quickselect-function-finding-the-median
-def QuickSelect(seq,k):
- k = len(seq) // 2
- # this part is the same as quick sort
- len_seq = len(seq)
- if len_seq < 2: return seq
+# def QuickSelect(seq, k):
+#  # this part is the same as quick sort
+#  len_seq = len(seq)
+#  if len_seq < 2: return seq
 
- ipivot = len_seq // 2
- pivot = seq[ipivot]
+#  ipivot = len_seq // 2
+#  pivot = seq[ipivot]
 
- smallerList = [x for i,x in enumerate(seq) if x <= pivot and  i != ipivot]
- largerList = [x for i,x in enumerate(seq) if x > pivot and  i != ipivot]
+#  smallerList = [x for i,x in enumerate(seq) if x <= pivot and  i != ipivot]
+#  largerList = [x for i,x in enumerate(seq) if x > pivot and  i != ipivot]
 
- # here starts the different part
- m = len(smallerList)
- if k == m:
-  return pivot
- elif k < m:
-  return quickSelect(smallerList, k)
+#  # here starts the different part
+#  m = len(smallerList)
+#  if k == m:
+#   return pivot
+#  elif k < m:
+#   return QuickSelect(smallerList, k)
+#  else:
+#   return QuickSelect(largerList, k-m-1)
+
+ 
+def partition(vector, left, right, pivotIndex):
+ pivotValue = vector[pivotIndex]
+ vector[pivotIndex], vector[right] = vector[right], vector[pivotIndex]  # Move pivot to end
+ storeIndex = left
+ for i in range(left, right):
+  if vector[i] < pivotValue:
+   vector[storeIndex], vector[i] = vector[i], vector[storeIndex]
+   storeIndex += 1
+ vector[right], vector[storeIndex] = vector[storeIndex], vector[right]  # Move pivot to its final place
+ return storeIndex
+ 
+def _select(vector, left, right, k):
+ "Returns the k-th smallest, (k >= 0), element of vector within vector[left:right+1] inclusive."
+ while True:
+  pivotIndex = random.randint(left, right)     # select pivotIndex between left and right
+  pivotNewIndex = partition(vector, left, right, pivotIndex)
+  pivotDist = pivotNewIndex - left
+  if pivotDist == k:
+   return vector[pivotNewIndex]
+  elif k < pivotDist:
+   right = pivotNewIndex - 1
+  else:
+   k -= pivotDist + 1
+   left = pivotNewIndex + 1
+ 
+def select(vector, k, left=None, right=None):
+ """\
+ Returns the k-th smallest, (k >= 0), element of vector within vector[left:right+1].
+ left, right default to (0, len(vector) - 1) if omitted
+ """
+ if left is None:
+  left = 0
+ lv1 = len(vector) - 1
+ if right is None:
+  right = lv1
+ assert vector and k >= 0, "Either null vector or k < 0 "
+ assert 0 <= left <= lv1, "left is out of range"
+ assert left <= right <= lv1, "right is out of range"
+ return _select(vector, left, right, k)
+
+#######################
+###    alternating  ###
+#######################
+def Alternating(s, axis):
+ if axis == 'x':
+  return HalfSet(s)
+
+ elif len(s) < 6:
+  return HalfSet(s)
+
  else:
-  return quickSelect(largerList, k-m-1)
+  y = list()
+  for i in xrange(len(s)):
+   y.append(s[i][1])
+
+  
+  m = select(y, len(y) // 2)
+
+  ind = y.index(m) #includes median in left set
+  l = s[:ind]
+  r = s[ind:]
+  return l,r
+
+
+
+
+
 
 #######################
 ###    halfSet  ###

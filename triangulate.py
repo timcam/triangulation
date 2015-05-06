@@ -413,8 +413,9 @@ def InCircle(a, b, c, d):
 
 ######    quickselect  ##########
 #http://stackoverflow.com/questions/19258457/python-quickselect-function-finding-the-median
+#http://stackoverflow.com/questions/12920508/quickselect-hw-in-python
 #didn't use quickselect
-def QuickSelect(seq,k):
+def QuickSelect(seq):
  k = len(seq) // 2
  # this part is the same as quick sort
  len_seq = len(seq)
@@ -611,18 +612,6 @@ def main(argv):
  outname = filename.split('.')
  count = MakeFaces(l,u,outname[0])
  print 'Wrote', str(count), 'triangles to file:', outname[0] + '.ele'
-
-
-
- # print 'entering Delaunay'
- # l,r = Delaunay(vertices)
-
- # print 'reporting l'
- # Report(l)
-
- # print 'reporting r'
- # Report(r)
-
 
 
 if __name__ == "__main__":
