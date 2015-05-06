@@ -1,4 +1,4 @@
-import sys, getopt, math, re, csv, time
+import sys, getopt, math, re, csv, time, random
 import numpy as np
 from array import array
 from predicates import orient2d, incircle
@@ -13,7 +13,7 @@ qlist = []
 #####################################################
 ########   Delauney Trianulation       ##############
 #####################################################
-def Delaunay(s):
+def Delaunay(s, a):
  #takes a list of tuples as points
 
  #Base case with two points
@@ -54,10 +54,23 @@ def Delaunay(s):
   #case with 4 or more points
   #split the set again and then zip together
  else:
-  left, right = HalfSet(s)
+  if a == 'n':
+   left, right = HalfSet(s)
 
-  ldo, ldi = Delaunay(left);
-  rdi, rdo = Delaunay(right);
+   ldo, ldi = Delaunay(left, a);
+   rdi, rdo = Delaunay(right, a);
+
+  elif a == 'x':
+   left, right = Alternating(s, 'x')
+
+   ldo, ldi = Delaunay(left, 'y');
+   rdi, rdo = Delaunay(right, 'y');
+
+  else:
+   left, right = Alternating(s, 'y')
+
+   ldo, ldi = Delaunay(left, 'x');
+   rdi, rdo = Delaunay(right, 'x'); 
 
   # print 'ldo.org:', ldo.Org, 'ldo.dest:', ldo.Dest
   # print 'ldi.org:', ldi.Org, 'ldi.dest:', ldi.Dest
@@ -411,30 +424,68 @@ def InCircle(a, b, c, d):
 ###########  Splitting Sets     ################
 ###############################################
 
-######    quickselect  ##########
-#http://stackoverflow.com/questions/19258457/python-quickselect-function-finding-the-median
-#http://stackoverflow.com/questions/12920508/quickselect-hw-in-python
-#didn't use quickselect
-def QuickSelect(seq):
- k = len(seq) // 2
- # this part is the same as quick sort
- len_seq = len(seq)
- if len_seq < 2: return seq
+def partition(vector, left, right, pivotIndex):
+ pivotValue = vector[pivotIndex]
+ vector[pivotIndex], vector[right] = vector[right], vector[pivotIndex]  # Move pivot to end
+ storeIndex = left
+ for i in range(left, right):
+  if vector[i] < pivotValue:
+   vector[storeIndex], vector[i] = vector[i], vector[storeIndex]
+   storeIndex += 1
+ vector[right], vector[storeIndex] = vector[storeIndex], vector[right]  # Move pivot to its final place
+ return storeIndex
+ 
+def _select(vector, left, right, k):
+ "Returns the k-th smallest, (k >= 0), element of vector within vector[left:right+1] inclusive."
+ while True:
+  pivotIndex = random.randint(left, right)     # select pivotIndex between left and right
+  pivotNewIndex = partition(vector, left, right, pivotIndex)
+  pivotDist = pivotNewIndex - left
+  if pivotDist == k:
+   return vector[pivotNewIndex]
+  elif k < pivotDist:
+   right = pivotNewIndex - 1
+  else:
+   k -= pivotDist + 1
+   left = pivotNewIndex + 1
+ 
+def select(vector, k, left=None, right=None):
+ """\
+ Returns the k-th smallest, (k >= 0), element of vector within vector[left:right+1].
+ left, right default to (0, len(vector) - 1) if omitted
+ """
+ if left is None:
+  left = 0
+ lv1 = len(vector) - 1
+ if right is None:
+  right = lv1
+ assert vector and k >= 0, "Either null vector or k < 0 "
+ assert 0 <= left <= lv1, "left is out of range"
+ assert left <= right <= lv1, "right is out of range"
+ return _select(vector, left, right, k)
 
- ipivot = len_seq // 2
- pivot = seq[ipivot]
+#######################
+###    alternating  ###
+#######################
+def Alternating(s, axis):
+ if axis == 'x':
+  return HalfSet(s)
 
- smallerList = [x for i,x in enumerate(seq) if x <= pivot and  i != ipivot]
- largerList = [x for i,x in enumerate(seq) if x > pivot and  i != ipivot]
+ elif len(s) < 6:
+  return HalfSet(s)
 
- # here starts the different part
- m = len(smallerList)
- if k == m:
-  return pivot
- elif k < m:
-  return quickSelect(smallerList, k)
  else:
-  return quickSelect(largerList, k-m-1)
+  y = list()
+  for i in xrange(len(s)):
+   y.append(s[i][1])
+
+  
+  m = select(y, len(y) // 2)
+
+  ind = y.index(m) #includes median in left set
+  l = s[:ind]
+  r = s[ind:]
+  return l,r
 
 #######################
 ###    halfSet  ###
@@ -580,9 +631,10 @@ def main(argv):
  print 'press -h for help'
 
  filename = 'test/4.node'
+ a = 'n'
 
  try: 
-  opts, args = getopt.getopt(argv,"f:",["file="])
+  opts, args = getopt.getopt(argv,"f:a",["file=","alt"])
 
  except getopt.GetoptError:
   print 'readnode.py -f <file>'
@@ -596,6 +648,9 @@ def main(argv):
    if isinstance(str(arg),str):
     filename = arg
 
+  elif opt in ("-a","--alt"):
+   a = 'x'
+
   else:
    print 'File not valid'
    sys.exit()
@@ -605,7 +660,7 @@ def main(argv):
  print 'Triangulating', len(v), 'points' 
 
  start = time.time()
- l,r = Delaunay(v)
+ l,r = Delaunay(v,a)
  end = time.time()
  print 'Elapsed time was:', end-start, 'seconds'
 
